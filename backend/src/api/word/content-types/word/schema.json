@@ -1,0 +1,20 @@
+{
+  "kind": "collectionType",
+  "collectionName": "words",
+  "info": {
+    "singularName": "word",
+    "pluralName": "words",
+    "displayName": "Word"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "english": {
+      "type": "string"
+    },
+    "translation": {
+      "type": "string"
+    }
+  }
+}
