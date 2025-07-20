@@ -19,6 +19,13 @@ export class MainApp extends HTMLElement {
       return;
     }
     this.user = user;
+    // Odczytaj sekcję z hash w URL
+    const hashSection = window.location.hash.replace("#", "");
+    if (hashSection) {
+      this.currentSection = hashSection;
+    } else {
+      this.currentSection = "dashboard";
+    }
     this.render();
   }
 
