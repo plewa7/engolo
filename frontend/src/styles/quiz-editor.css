@@ -1,0 +1,49 @@
+/* Quiz Editor Styles */
+.quiz-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 420px;
+  margin: 24px auto;
+  background: #f7fbff;
+  border: 1px solid #1976d2;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #1976d21a;
+  padding: 28px 24px 20px 24px;
+}
+.quiz-editor-form label {
+  font-weight: 500;
+  color: #1976d2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.quiz-editor-form input,
+.quiz-editor-form textarea {
+  padding: 8px;
+  border: 1px solid #b3c6e0;
+  border-radius: 6px;
+  font-size: 1em;
+  margin-top: 2px;
+}
+.quiz-editor-form button[type="submit"] {
+  margin-top: 16px;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 0;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.quiz-editor-form button[type="submit"]:hover {
+  background: #1565c0;
+}
+#status {
+  margin-top: 14px;
+  font-weight: 500;
+  color: #1976d2;
+  text-align: center;
+}

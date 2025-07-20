@@ -1,4 +1,5 @@
 import "./dashboard-home.ts";
+import "./quiz-list.ts";
 
 export class StudentDashboard extends HTMLElement {
   static get observedAttributes() {
@@ -18,7 +19,12 @@ export class StudentDashboard extends HTMLElement {
     if (section === "dashboard") {
       this.innerHTML = `<dashboard-home></dashboard-home>`;
     } else if (section === "challenges") {
-      this.innerHTML = `<div><h2>Wyzwania - uczeń</h2><p>Weź udział w codziennych zadaniach.</p></div>`;
+      this.innerHTML = `
+        <div>
+          <h2>Wyzwania - uczeń</h2>
+          <quiz-list></quiz-list>
+        </div>
+      `;
     } else if (section === "chat") {
       this.innerHTML = `<div><h2>Czat - uczeń</h2><p>Rozmawiaj z nauczycielem lub innymi uczniami.</p></div>`;
     } else if (section === "stats") {
