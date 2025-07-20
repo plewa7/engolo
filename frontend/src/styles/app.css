@@ -1,0 +1,30 @@
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f6f8ff;
+  margin: 0;
+  padding: 0;
+}
+.app-container {
+  max-width: 420px;
+  margin: 5em auto 0 auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+  padding: 2.5em 2em 2em 2em;
+  text-align: center;
+}
+.logout-btn {
+  margin-top: 2em;
+  background: #646cff;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.8em 2em;
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.logout-btn:hover {
+  background: #535bf2;
+}
