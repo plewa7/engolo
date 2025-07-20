@@ -1,3 +1,5 @@
+import "./dashboard-home.ts";
+
 export class StudentDashboard extends HTMLElement {
   static get observedAttributes() {
     return ["section"];
@@ -14,7 +16,7 @@ export class StudentDashboard extends HTMLElement {
   render() {
     const section = this.getAttribute("section") || "dashboard";
     if (section === "dashboard") {
-      this.innerHTML = `<div>Student Dashboard</div>`;
+      this.innerHTML = `<dashboard-home></dashboard-home>`;
     } else if (section === "challenges") {
       this.innerHTML = `<div><h2>Wyzwania - uczeń</h2><p>Weź udział w codziennych zadaniach.</p></div>`;
     } else if (section === "chat") {

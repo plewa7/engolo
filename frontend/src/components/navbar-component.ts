@@ -9,6 +9,15 @@ export class NavbarComponent extends HTMLElement {
 
   connectedCallback() {
     this.updateSections();
+    // Odczytaj sekcję z hash w URL, jeśli istnieje
+    const hashSection = window.location.hash.replace("#", "");
+    if (hashSection && this.sections.some((s) => s.key === hashSection)) {
+      this.currentSection = hashSection;
+      this.setAttribute("current-section", hashSection);
+    } else {
+      this.currentSection = "dashboard";
+      this.setAttribute("current-section", "dashboard");
+    }
     this.render();
   }
 
@@ -46,7 +55,7 @@ export class NavbarComponent extends HTMLElement {
   }
 
   render() {
-    // Jeśli nawigacja już istnieje, aktualizuj tylko klasy aktywności
+
     const nav = this.querySelector("nav.navbar");
     if (nav) {
       // Aktualizuj klasy aktywności przycisków
@@ -60,7 +69,7 @@ export class NavbarComponent extends HTMLElement {
       });
       return;
     }
-    // Pierwsze renderowanie
+
     this.innerHTML = `
       <link rel="stylesheet" href="/src/styles/navbar.css">
       <nav class="navbar">
@@ -81,6 +90,7 @@ export class NavbarComponent extends HTMLElement {
         if (section && section !== this.currentSection) {
           this.currentSection = section;
           this.setAttribute("current-section", section);
+          window.location.hash = section;
         }
         this.dispatchEvent(
           new CustomEvent("navigate", {
