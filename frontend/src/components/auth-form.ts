@@ -91,8 +91,6 @@ class AuthForm extends HTMLElement {
     );
     this.querySelector("#login-form")?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      // Only clear messages if not coming from registration success
-      // Only clear messages if not coming from registration success
       // Rozróżnienie: czy użytkownik jest na zakładce logowania
       if (this.mode !== "login") return;
       this.errorMsg = "";
@@ -106,10 +104,8 @@ class AuthForm extends HTMLElement {
           window.location.href = "app.html";
         },
         error: (err) => {
-          // Show login failed only if user is on login tab
           if (this.mode === "login") {
             let msg = err?.response?.error?.message || "Unknown error";
-            // Clean up known Strapi messages for better UX
             if (msg === "Invalid identifier or password") {
               msg = "Invalid email or password.";
             } else if (msg === "Missing required parameter(s)") {
@@ -143,9 +139,7 @@ class AuthForm extends HTMLElement {
         });
       }
     );
-    // Add logout handler globally (example: window.logout = ...)
     (window as any).logout = () => {
-      // Remove JWT from localStorage and authStore, redirect to main page
       localStorage.removeItem("jwt");
       authStore.update(() => ({ jwt: null, user: null }));
       window.location.href = "/";

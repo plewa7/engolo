@@ -1,5 +1,3 @@
-// frontend/src/features/auth/check-auth.ts
-
 // Sprawdza ważność JWT przez próbę pobrania danych użytkownika z backendu
 export async function checkAuth(jwtKey = "strapi_jwt") {
   const jwt = localStorage.getItem(jwtKey);
