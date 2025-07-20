@@ -369,6 +369,38 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiQuizQuiz extends Struct.CollectionTypeSchema {
+  collectionName: 'quizzes';
+  info: {
+    description: '';
+    displayName: 'Quiz';
+    pluralName: 'quizzes';
+    singularName: 'quiz';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    correctAnswer: Schema.Attribute.Text;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::quiz.quiz'> &
+      Schema.Attribute.Private;
+    options: Schema.Attribute.JSON;
+    publishedAt: Schema.Attribute.DateTime;
+    question: Schema.Attribute.Text;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
 export interface ApiWordWord extends Struct.CollectionTypeSchema {
   collectionName: 'words';
   info: {
@@ -877,6 +909,7 @@ export interface PluginUsersPermissionsUser
       }>;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
+    quizzes: Schema.Attribute.Relation<'oneToMany', 'api::quiz.quiz'>;
     resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
     role: Schema.Attribute.Relation<
       'manyToOne',
@@ -904,6 +937,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::quiz.quiz': ApiQuizQuiz;
       'api::word.word': ApiWordWord;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
