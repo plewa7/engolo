@@ -1,7 +1,7 @@
 import { ajax } from "rxjs/ajax";
 import { map, tap } from "rxjs/operators";
 import { Observable } from "rxjs";
-import { setJwt } from "./auth.store";
+import { setUser } from "./auth.store";
 
 const API_URL = "http://localhost:1337/api"; // dostosuj do swojego backendu
 
@@ -19,7 +19,8 @@ export function login(form: FormData): Observable<any> {
       map((res) => res.response),
       tap((response: any) => {
         // Strapi zwraca JWT w response.jwt
-        setJwt(response.jwt || null);
+        if (response.user) setUser(response.user);
+        if (response.jwt) localStorage.setItem("strapi_jwt", response.jwt);
       })
     );
 }

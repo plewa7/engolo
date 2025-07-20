@@ -1,35 +1,21 @@
 import { createStore, withProps } from "@ngneat/elf";
 
-const JWT_KEY = "strapi_jwt";
-
 export interface AuthState {
-  jwt: string | null;
   user: any | null;
 }
 
-// Try to load JWT from localStorage on init
-const initialJwt =
-  typeof window !== "undefined" ? localStorage.getItem(JWT_KEY) : null;
-
 export const authStore = createStore(
   { name: "auth" },
-  withProps<AuthState>({ jwt: initialJwt, user: null })
+  withProps<AuthState>({ user: null })
 );
 
-// Helper to persist JWT to localStorage
-export function setJwt(jwt: string | null) {
-  authStore.update((state) => ({ ...state, jwt }));
-  if (jwt) {
-    localStorage.setItem(JWT_KEY, jwt);
-  } else {
-    localStorage.removeItem(JWT_KEY);
-  }
+// Helper to persist user to store
+export function setUser(user: any | null) {
+  authStore.update((state) => ({ ...state, user }));
 }
 
-// Logout function: clears JWT from store and localStorage
+// Logout function: clears JWT from localStorage and user from store
 export function logout() {
-  // Najpierw usuń JWT z localStorage
-  localStorage.removeItem(JWT_KEY);
-  // Wyczyść stan w store
-  authStore.update((state) => ({ ...state, jwt: null, user: null }));
+  localStorage.removeItem("strapi_jwt");
+  authStore.update((state) => ({ ...state, user: null }));
 }

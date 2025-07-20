@@ -15,7 +15,8 @@ function redirectToApp() {
 // Subskrybuj zmiany stanu auth
 
 authStore.subscribe((state) => {
-  if (state.jwt && state.user) {
+  const jwt = localStorage.getItem("strapi_jwt");
+  if (jwt && state.user) {
     redirectToApp();
   } else {
     renderHome();

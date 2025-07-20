@@ -8,9 +8,13 @@
   </head>
   <body>
     <div class="app-container" id="app-container" style="display: none">
-      <h1>Witamy w aplikacji!</h1>
-      <p>Zostałeś poprawnie zalogowany/zarejestrowany.</p>
-      <button class="logout-btn" id="logout-btn">Wyloguj</button>
+      <div>
+        Zalogowany jako: <span id="user-login"></span> (<span
+          id="user-role"
+        ></span
+        >)
+        <button class="logout-btn" id="logout-btn">Wyloguj</button>
+      </div>
     </div>
     <script type="module" src="./src/app.ts"></script>
   </body>
