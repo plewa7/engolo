@@ -62,7 +62,7 @@ class QuizList extends HTMLElement {
 
   async fetchQuizzes() {
     try {
-      const API_URL = "http://localhost:1337/api/quizzes";
+      const API_URLe = "http://localhost:1337/api/quizzes";
       const token = localStorage.getItem("strapi_jwt");
       const headers: Record<string, string> = {};
       if (token) {
