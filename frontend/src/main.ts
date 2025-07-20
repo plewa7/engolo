@@ -1,18 +1,26 @@
-fetch("http://localhost:1337/api/words")
-  .then((res) => res.json())
-  .then((data) => {
-    console.log("API response:", data);
+import "./components/auth-form";
+import { authStore } from "./features/auth/auth.store";
 
-    const list = document.createElement("ul");
+function renderHome() {
+  const app = document.getElementById("app");
+  if (!app) return;
+  app.innerHTML = `<div class="auth-form-wrapper"><auth-form></auth-form></div>`;
+}
 
-    data.data.forEach((word: any) => {
-      const li = document.createElement("li");
-      li.textContent = `${word.english} - ${word.translation}`;
-      list.appendChild(li);
-    });
+// Po zalogowaniu przekieruj do app.html
+function redirectToApp() {
+  window.location.href = "/app.html";
+}
 
-    document.body.appendChild(list);
-  })
-  .catch((error) => {
-    console.error("Błąd w fetchu:", error);
-  });
+// Subskrybuj zmiany stanu auth
+
+authStore.subscribe((state) => {
+  if (state.jwt && state.user) {
+    redirectToApp();
+  } else {
+    renderHome();
+  }
+});
+
+// Inicjalizacja
+renderHome();
