@@ -1,4 +1,7 @@
 export class MainApp extends HTMLElement {
+  private user: any = null;
+  private currentSection: string = "dashboard";
+
   async connectedCallback() {
     const { authStore } = await import("../features/auth/auth.store.ts");
     const { fetchUser } = await import("../features/auth/fetch-user.ts");
@@ -15,24 +18,44 @@ export class MainApp extends HTMLElement {
       window.location.replace("index.html");
       return;
     }
-    this.render(user);
+    this.user = user;
+    this.render();
   }
 
-  render(user: any) {
+  render() {
     this.innerHTML = `
-      <navbar-component></navbar-component>
-      ${
-        user.role?.name === "teacher"
-          ? "<teacher-dashboard></teacher-dashboard>"
-          : "<student-dashboard></student-dashboard>"
-      }
+      <navbar-component role="${
+        this.user.role?.name || "student"
+      }" current-section="${this.currentSection}"></navbar-component>
+      <div id="spa-content"></div>
     `;
-    this.querySelector("navbar-component")?.addEventListener("logout", () => {
-      import("../features/auth/auth.store.ts").then(({ logout }) => {
-        logout();
-        window.location.replace("index.html");
+    const navbar = this.querySelector("navbar-component");
+    if (navbar) {
+      navbar.addEventListener("navigate", (e: any) => {
+        this.currentSection = e.detail.section;
+        // Synchronizuj aktualną sekcję z navbar
+        navbar.setAttribute("current-section", this.currentSection);
+        this.renderSection();
       });
-    });
+      navbar.addEventListener("logout", () => {
+        import("../features/auth/auth.store.ts").then(({ logout }) => {
+          logout();
+          window.location.replace("index.html");
+        });
+      });
+    }
+    this.renderSection();
+  }
+
+  renderSection() {
+    const content = this.querySelector("#spa-content");
+    if (!content) return;
+    // Renderuj dashboard z atrybutem section
+    if (this.user.role?.name === "teacher") {
+      content.innerHTML = `<teacher-dashboard section="${this.currentSection}"></teacher-dashboard>`;
+    } else {
+      content.innerHTML = `<student-dashboard section="${this.currentSection}"></student-dashboard>`;
+    }
   }
 }
 
