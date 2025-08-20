@@ -6,7 +6,7 @@ export default [
     name: 'strapi::cors',
     config: {
       enabled: true,
-      origin: ['http://localhost:5175'], // frontend dev
+      origin: 'http://localhost:5173', // zmiana: string zamiast tablicy
       headers: [
         'Content-Type',
         'Authorization',
