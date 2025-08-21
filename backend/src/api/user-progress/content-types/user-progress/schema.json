@@ -1,0 +1,45 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_progresses",
+  "info": {
+    "singularName": "user-progress",
+    "pluralName": "user-progresses",
+    "displayName": "User Progress",
+    "description": "Tracks user progress in various exercises and activities"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "language_exercise",
+        "quiz",
+        "chat_activity"
+      ],
+      "required": true
+    },
+    "exerciseId": {
+      "type": "string",
+      "required": true
+    },
+    "score": {
+      "type": "integer",
+      "default": 0
+    },
+    "completedAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "metadata": {
+      "type": "json"
+    }
+  }
+}

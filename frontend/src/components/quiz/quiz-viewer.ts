@@ -4,6 +4,8 @@ class QuizViewer extends HTMLElement {
   shadow: ShadowRoot;
   quizId: string | null = null;
   quiz: any = null;
+  startTime: number = 0;
+  
   constructor() {
     super();
     this.shadow = this.attachShadow({ mode: "open" });
@@ -95,6 +97,10 @@ class QuizViewer extends HTMLElement {
         <div id="result"></div>
       </div>
     `;
+    
+    // Start timer when quiz is rendered
+    this.startTime = Date.now();
+    
     const form = this.shadow.querySelector<HTMLFormElement>("#quiz-form");
     if (form) {
       form.onsubmit = this.handleSubmit.bind(this);
@@ -107,28 +113,54 @@ class QuizViewer extends HTMLElement {
     this.shadow.innerHTML = `<div style="color:red;">${msg}</div>`;
   }
 
-  handleSubmit(e: SubmitEvent) {
+  async handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const answer = (form.elements.namedItem("answer") as RadioNodeList)?.value;
     const quizId = String(this.getAttribute("quiz-id"));
-    // Rozwiązane quizy tylko dla danego użytkownika
+    const timeSpent = Math.round((Date.now() - this.startTime) / 1000); // seconds
+    
+    // Get user ID
     let userId = "anon";
-    // Strapi user (np. z JWT)
     const strapiUser = JSON.parse(localStorage.getItem("user") || "null");
     if (strapiUser && strapiUser.id) {
       userId = String(strapiUser.id);
     } else {
-      // Próba pobrania userId z JWT (np. jeśli user info nie jest w localStorage)
       const jwt = localStorage.getItem("strapi_jwt");
       if (jwt) {
         try {
-          // JWT: header.payload.signature, payload to base64
           const payload = JSON.parse(atob(jwt.split(".")[1]));
           if (payload && payload.id) userId = String(payload.id);
         } catch (e) {}
       }
     }
+
+    // Check if correct
+    const correctAnswer = this.quiz.correctAnswer || 
+                         (this.quiz.attributes && this.quiz.attributes.correctAnswer) || "";
+    const isCorrect = answer === correctAnswer;
+    
+    // Get question text
+    const question = this.quiz.question ||
+                    (this.quiz.attributes && this.quiz.attributes.question) || 
+                    "Unknown question";
+
+    // Save detailed statistics
+    await this.saveQuizStatistic({
+      user: userId,
+      quizId: quizId,
+      question: question,
+      userAnswer: answer || '',
+      correctAnswer: correctAnswer,
+      isCorrect: isCorrect,
+      attempts: 1,
+      timeSpent: timeSpent,
+      completedAt: new Date().toISOString(),
+      exerciseType: 'teacher_quiz',
+      category: 'Quiz nauczyciela'
+    });
+
+    // Legacy localStorage tracking (keep for compatibility)
     const solvedKey = `solved_quizzes_${userId}`;
     const solved = localStorage.getItem(solvedKey);
     let solvedIds: string[] = solved ? JSON.parse(solved) : [];
@@ -136,11 +168,60 @@ class QuizViewer extends HTMLElement {
       solvedIds.push(quizId);
       localStorage.setItem(solvedKey, JSON.stringify(solvedIds));
     }
-    if (answer === this.quiz.correctAnswer) {
-      this.shadow.innerHTML = `<div style=\"color:green;\">Dobra odpowiedź!</div>`;
+
+    // Show result
+    if (isCorrect) {
+      this.shadow.innerHTML = `<div style="color:green;">✅ Dobra odpowiedź!</div>`;
     } else {
-      this.shadow.innerHTML = `<div style=\"color:red;\">Niestety, zła odpowiedź.</div>`;
+      this.shadow.innerHTML = `<div style="color:red;">❌ Niestety, zła odpowiedź. Poprawna odpowiedź to: ${correctAnswer}</div>`;
     }
+  }
+
+  async saveQuizStatistic(statisticData: any) {
+    try {
+      const token = localStorage.getItem("strapi_jwt");
+      if (!token) {
+        console.log('ℹ️ No token, quiz statistics will be saved locally only');
+        this.saveQuizStatisticLocally(statisticData);
+        return;
+      }
+
+      const response = await fetch('http://localhost:1337/api/quiz-statistics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ data: statisticData })
+      });
+
+      if (response.ok) {
+        console.log('✅ Quiz statistic saved to backend:', statisticData.quizId);
+      } else if (response.status === 403) {
+        console.log('⚠️ Backend permissions not ready, saving quiz stats locally:', statisticData.quizId);
+        this.saveQuizStatisticLocally(statisticData);
+      } else {
+        console.log('⚠️ Error saving quiz to backend:', response.status);
+        this.saveQuizStatisticLocally(statisticData);
+      }
+    } catch (error: any) {
+      console.log('⚠️ Network error, saving quiz locally:', error?.message || error);
+      this.saveQuizStatisticLocally(statisticData);
+    }
+  }
+
+  saveQuizStatisticLocally(statisticData: any) {
+    const storageKey = `quiz_statistics_${statisticData.user}`;
+    const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    existing.push(statisticData);
+    
+    // Keep only last 100 statistics to avoid storage bloat
+    if (existing.length > 100) {
+      existing.splice(0, existing.length - 100);
+    }
+    
+    localStorage.setItem(storageKey, JSON.stringify(existing));
+    console.log('📱 Quiz statistic saved locally');
   }
 }
 customElements.define("quiz-viewer", QuizViewer);

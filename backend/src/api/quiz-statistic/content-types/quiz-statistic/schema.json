@@ -1,0 +1,60 @@
+{
+  "kind": "collectionType",
+  "collectionName": "quiz_statistics",
+  "info": {
+    "singularName": "quiz-statistic",
+    "pluralName": "quiz-statistics",
+    "displayName": "Quiz Statistic",
+    "description": "Detailed statistics for teacher quizzes"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "quizId": {
+      "type": "string",
+      "required": true
+    },
+    "question": {
+      "type": "text",
+      "required": true
+    },
+    "userAnswer": {
+      "type": "string",
+      "required": true
+    },
+    "correctAnswer": {
+      "type": "string",
+      "required": true
+    },
+    "isCorrect": {
+      "type": "boolean",
+      "required": true
+    },
+    "attempts": {
+      "type": "integer",
+      "default": 1
+    },
+    "timeSpent": {
+      "type": "integer",
+      "required": true
+    },
+    "completedAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "exerciseType": {
+      "type": "string",
+      "default": "teacher_quiz"
+    },
+    "category": {
+      "type": "string",
+      "default": "Quiz nauczyciela"
+    }
+  }
+}

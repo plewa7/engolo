@@ -1,0 +1,78 @@
+{
+  "kind": "collectionType",
+  "collectionName": "exercise_statistics",
+  "info": {
+    "singularName": "exercise-statistic",
+    "pluralName": "exercise-statistics",
+    "displayName": "Exercise Statistics",
+    "description": "Detailed statistics for language exercises"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "exerciseId": {
+      "type": "string",
+      "required": true
+    },
+    "exerciseType": {
+      "type": "enumeration",
+      "enum": [
+        "translation",
+        "vocabulary", 
+        "grammar",
+        "listening"
+      ],
+      "required": true
+    },
+    "module": {
+      "type": "integer",
+      "required": true
+    },
+    "category": {
+      "type": "string",
+      "required": true
+    },
+    "question": {
+      "type": "text",
+      "required": true
+    },
+    "userAnswer": {
+      "type": "string"
+    },
+    "correctAnswer": {
+      "type": "string",
+      "required": true
+    },
+    "isCorrect": {
+      "type": "boolean",
+      "required": true
+    },
+    "attempts": {
+      "type": "integer",
+      "default": 1
+    },
+    "timeSpent": {
+      "type": "integer",
+      "description": "Time spent in seconds"
+    },
+    "difficulty": {
+      "type": "enumeration",
+      "enum": [
+        "beginner",
+        "intermediate", 
+        "advanced"
+      ]
+    },
+    "completedAt": {
+      "type": "datetime",
+      "required": true
+    }
+  }
+}
