@@ -1,5 +1,7 @@
 import "./dashboard-home.ts";
 import "./quiz-editor.ts";
+import '../components/chat-box';
+
 export class TeacherDashboard extends HTMLElement {
   static get observedAttributes() {
     return ["section"];
@@ -25,7 +27,7 @@ export class TeacherDashboard extends HTMLElement {
         </div>
       `;
     } else if (section === "chat") {
-      this.innerHTML = `<div><h2>Czat - nauczyciel</h2><p>Komunikuj się z uczniami i innymi nauczycielami.</p></div>`;
+      this.innerHTML = `<section><h2>Czat - nauczyciel</h2><p>Komunikuj się z uczniami i innymi nauczycielami.</p><chat-box></chat-box></section>`;
     } else if (section === "stats") {
       this.innerHTML = `<div><h2>Statystyki uczniów</h2><p>Przeglądaj postępy i wyniki uczniów.</p></div>`;
     } else if (section === "dictionary") {
@@ -35,6 +37,10 @@ export class TeacherDashboard extends HTMLElement {
     } else {
       this.innerHTML = `<div><h2>Panel</h2></div>`;
     }
+
+    // Dodaj czat na dole dashboardu:
+    const chatBox = document.createElement('chat-box');
+    document.body.appendChild(chatBox);
   }
 }
 customElements.define("teacher-dashboard", TeacherDashboard);

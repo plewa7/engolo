@@ -1,0 +1,38 @@
+{
+  "collectionName": "chat_messages",
+  "info": {
+    "singularName": "chat-message",
+    "pluralName": "chat-messages",
+    "displayName": "Chat Message",
+    "description": "Wiadomość czatu do nauki w parach lub grupach"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "content": {
+      "type": "text",
+      "required": true
+    },
+    "sender": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "required": true
+    },
+    "receiver": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "required": false
+    },
+    "group": {
+      "type": "string",
+      "required": false,
+      "description": "Identyfikator grupy lub pary czatu"
+    },
+    "createdAt": {
+      "type": "datetime"
+    }
+  }
+}
