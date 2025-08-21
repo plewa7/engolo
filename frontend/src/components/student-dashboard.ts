@@ -37,10 +37,6 @@ export class StudentDashboard extends HTMLElement {
     } else {
       this.innerHTML = `<div><h2>Panel</h2></div>`;
     }
-
-    // Dodaj czat na dole dashboardu:
-    const chatBox = document.createElement('chat-box');
-    document.body.appendChild(chatBox);
   }
 }
 customElements.define("student-dashboard", StudentDashboard);

@@ -3,14 +3,45 @@ import { factories } from '@strapi/strapi';
 
 export default factories.createCoreController('api::chat.chat-message', ({ strapi }) => ({
   async find(ctx) {
-    // Możliwość filtrowania po grupie
-    const { group } = ctx.query;
-    const messages = await strapi.entityService.findMany('api::chat.chat-message', {
-      filters: group ? { group } : {},
-      populate: ['sender'],
-      sort: { createdAt: 'asc' },
-    });
-    return messages;
+    console.log('Find messages - query params:', JSON.stringify(ctx.query, null, 2));
+    
+    // Sprawdź czy to zapytanie o prywatne wiadomości
+    const isPrivateMessageQuery = ctx.query.filters && 
+                                  ctx.query.filters['$or'] && 
+                                  ctx.query.filters['$or'][0] && 
+                                  ctx.query.filters['$or'][0]['sender'];
+    
+    if (isPrivateMessageQuery) {
+      // Dla prywatnych wiadomości - pobierz wszystkie i przefiltruj
+      const currentUserId = ctx.state.user?.id;
+      const otherUserId = ctx.query.filters['$or'][0]['receiver']['id'] || 
+                          ctx.query.filters['$or'][1]['sender']['id'];
+      
+      console.log('Szukam prywatnych wiadomości między:', currentUserId, 'a', otherUserId);
+      
+      const messages = await strapi.entityService.findMany('api::chat.chat-message', {
+        populate: ['sender', 'receiver'],
+        sort: { createdAt: 'asc' },
+      });
+      
+      // Filtruj wiadomości między dwoma użytkownikami
+      const filteredMessages = messages.filter((msg: any) => {
+        if (!msg.receiver) return false; // Tylko prywatne wiadomości
+        const senderId = msg.sender?.id;
+        const receiverId = msg.receiver?.id;
+        
+        return (senderId == currentUserId && receiverId == otherUserId) ||
+               (senderId == otherUserId && receiverId == currentUserId);
+      });
+      
+      console.log('Znaleziono prywatnych wiadomości:', filteredMessages.length);
+      return filteredMessages;
+    } else {
+      // Dla wiadomości grupowych użyj standardowego serwisu
+      const { results } = await strapi.service('api::chat.chat-message').find(ctx.query);
+      console.log('Found group messages:', results.length);
+      return results;
+    }
   },
 
   async create(ctx) {
