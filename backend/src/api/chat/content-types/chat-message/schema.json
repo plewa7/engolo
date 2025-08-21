@@ -29,7 +29,7 @@
     "group": {
       "type": "string",
       "required": false,
-      "description": "Identyfikator grupy lub pary czatu"
+      "description": "Identyfikator grupy - może być nazwa lub ID"
     },
     "createdAt": {
       "type": "datetime"

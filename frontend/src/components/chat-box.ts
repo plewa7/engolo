@@ -19,6 +19,9 @@ const styles = css`
     height: 500px; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
+            this.fetchMessages(); // Pobierz nowe wiadomości
+          }} style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; width: 100%;">0,0,0.1);
+  }
 
   .chat-box label {
     font-weight: 600;
@@ -132,6 +135,10 @@ class ChatBox extends LitElement {
     loading: { type: Boolean },
     users: { type: Array },
     selectedTarget: { type: String },
+    selectedUsers: { type: Array },
+    showGroupCreation: { type: Boolean },
+    newGroupName: { type: String },
+    groups: { type: Array },
   };
 
   declare groupId: string;
@@ -141,6 +148,10 @@ class ChatBox extends LitElement {
   declare loading: boolean;
   declare users: ChatUser[];
   declare selectedTarget: string;
+  declare selectedUsers: number[];
+  declare showGroupCreation: boolean;
+  declare newGroupName: string;
+  declare groups: any[];
   private _interval: number | null = null;
 
   constructor() {
@@ -152,11 +163,18 @@ class ChatBox extends LitElement {
     this.loading = false;
     this.users = [];
     this.selectedTarget = '';
+    this.selectedUsers = [];
+    this.showGroupCreation = false;
+    this.newGroupName = '';
+    this.groups = [];
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this.fetchUser().then(() => this.fetchUsers());
+    this.fetchUser().then(() => {
+      this.fetchUsers();
+      this.fetchGroups();
+    });
     this.fetchMessages();
     this._interval = setInterval(() => this.fetchMessages(), 2000) as number;
   }
@@ -195,8 +213,19 @@ class ChatBox extends LitElement {
     }
   }
 
+  async fetchGroups() {
+    const jwt = localStorage.getItem('strapi_jwt');
+    const res = await fetch('/api/chat-messages/groups', {
+      headers: jwt ? { 'Authorization': `Bearer ${jwt}` } : {},
+    });
+    if (res.ok) {
+      this.groups = await res.json();
+    } else {
+      this.groups = [];
+    }
+  }
+
   async fetchMessages() {
-    console.log('Pobieranie wiadomości dla:', this.selectedTarget);
     const jwt = localStorage.getItem('strapi_jwt');
     let url = '/api/chat-messages';
     
@@ -207,16 +236,17 @@ class ChatBox extends LitElement {
       // Pobierz wiadomości między zalogowanym użytkownikiem a wybranym odbiorcą
       // Używamy prostszego zapytania - backend przefiltruje wyniki
       url += `?populate[0]=sender&populate[1]=receiver&filters[$or][0][sender][id]=${this.user?.id}&filters[$or][0][receiver][id]=${userId}&filters[$or][1][sender][id]=${userId}&filters[$or][1][receiver][id]=${this.user?.id}`;
-      console.log('URL dla prywatnych wiadomości:', url);
+    } else if (this.selectedTarget && this.selectedTarget.startsWith('newgroup_')) {
+      // Wiadomości nowej grupy - wyciągnij ID grupy z "newgroup_123" -> "123"
+      const groupId = this.selectedTarget.replace('newgroup_', '');
+      url += `?populate[0]=sender&filters[group][$eq]=group_${groupId}`;
     } else if (this.selectedTarget && this.selectedTarget.startsWith('group_')) {
       // Wiadomości grupowe - wyciągnij nazwę grupy z "group_global" -> "global"
       const groupName = this.selectedTarget.replace('group_', '');
       url += `?populate[0]=sender&filters[group][$eq]=${encodeURIComponent(groupName)}`;
-      console.log('URL dla grupowych wiadomości:', url);
     } else {
       // Fallback - używaj groupId
       url += `?populate[0]=sender&filters[group][$eq]=${encodeURIComponent(this.groupId)}`;
-      console.log('URL fallback:', url);
     }
     
     const res = await fetch(url, {
@@ -225,7 +255,6 @@ class ChatBox extends LitElement {
     if (res.ok) {
       const data = await res.json();
       this.messages = Array.isArray(data) ? data : data.data || [];
-      console.log('Pobrano wiadomości:', this.messages.length, 'dla celu:', this.selectedTarget);
       this.requestUpdate();
       // Przewiń do najnowszych wiadomości
       this.updateComplete.then(() => {
@@ -256,6 +285,10 @@ class ChatBox extends LitElement {
       // Wyciągnij ID użytkownika z "user_123" -> "123"
       const userId = this.selectedTarget.replace('user_', '');
       messageData.data.receiver = parseInt(userId);
+    } else if (this.selectedTarget && this.selectedTarget.startsWith('newgroup_')) {
+      // Wiadomość do nowej grupy - wyciągnij ID grupy z "newgroup_123" -> "123"
+      const groupId = this.selectedTarget.replace('newgroup_', '');
+      messageData.data.groupId = groupId;
     } else if (this.selectedTarget && this.selectedTarget.startsWith('group_')) {
       // Wiadomość grupowa - wyciągnij nazwę grupy z "group_global" -> "global"
       const groupName = this.selectedTarget.replace('group_', '');
@@ -288,29 +321,155 @@ class ChatBox extends LitElement {
     this.loading = false;
   }
 
+  toggleUserSelection(userId: number) {
+    if (this.selectedUsers.includes(userId)) {
+      this.selectedUsers = this.selectedUsers.filter(id => id !== userId);
+    } else {
+      this.selectedUsers = [...this.selectedUsers, userId];
+    }
+    this.requestUpdate();
+  }
+
+  async createGroup() {
+    if (!this.newGroupName.trim() || this.selectedUsers.length === 0) {
+      alert('Podaj nazwę grupy i wybierz przynajmniej jednego użytkownika');
+      return;
+    }
+
+    const jwt = localStorage.getItem('strapi_jwt');
+    try {
+      const response = await fetch('/api/chat-messages/groups', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(jwt ? { 'Authorization': `Bearer ${jwt}` } : {}),
+        },
+        body: JSON.stringify({
+          data: {
+            name: this.newGroupName,
+            memberIds: this.selectedUsers,
+          }
+        }),
+      });
+
+      if (response.ok) {
+        const newGroup = await response.json();
+        this.groups = [...this.groups, newGroup];
+        this.selectedTarget = `newgroup_${newGroup.id}`;
+        this.newGroupName = '';
+        this.selectedUsers = [];
+        this.showGroupCreation = false;
+        this.messages = [];
+        this.fetchMessages();
+        this.requestUpdate();
+      } else {
+        console.error('Failed to create group:', await response.text());
+        alert('Nie udało się utworzyć grupy');
+      }
+    } catch (error) {
+      console.error('Error creating group:', error);
+      alert('Błąd podczas tworzenia grupy');
+    }
+  }
+
   render() {
     return html`
       <div class="chat-box">
-        <label>Wybierz odbiorcę/grupę:
+        ${this.showGroupCreation ? html`
+          <!-- Tworzenie nowej grupy -->
+          <div style="border: 2px solid #3b82f6; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <h3 style="margin: 0 0 12px 0; color: #3b82f6;">Utwórz nową grupę</h3>
+            <input 
+              type="text" 
+              placeholder="Nazwa grupy..."
+              .value=${this.newGroupName}
+              @input=${(e: Event) => this.newGroupName = (e.target as HTMLInputElement).value}
+              style="width: 100%; padding: 8px; margin-bottom: 12px; border: 1px solid #d1d5db; border-radius: 4px;"
+            />
+            <div style="margin-bottom: 12px;">
+              <label style="font-weight: 600; display: block; margin-bottom: 8px;">Wybierz członków:</label>
+              ${this.users.filter((u: ChatUser) => u.id !== this.user?.id).map((u: ChatUser) => html`
+                <label style="display: flex; align-items: center; margin-bottom: 4px; cursor: pointer;">
+                  <input 
+                    type="checkbox" 
+                    .checked=${this.selectedUsers.includes(u.id)}
+                    @change=${() => this.toggleUserSelection(u.id)}
+                    style="margin-right: 8px;"
+                  />
+                  ${u.username}
+                </label>
+              `)}
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button 
+                type="button" 
+                @click=${this.createGroup}
+                style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;"
+                ?disabled=${!this.newGroupName.trim() || this.selectedUsers.length === 0}
+              >
+                Utwórz grupę
+              </button>
+              <button 
+                type="button" 
+                @click=${() => { this.showGroupCreation = false; this.selectedUsers = []; this.newGroupName = ''; }}
+                style="padding: 8px 16px; background: #6b7280; color: white; border: none; border-radius: 4px; cursor: pointer;"
+              >
+                Anuluj
+              </button>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Wybór odbiorcy/grupy -->
+        <div style="margin-bottom: 16px;">
+          <label style="font-weight: 600; display: block; margin-bottom: 8px;">Rozmowa z:</label>
           <select @change=${(e: Event) => {
             const newTarget = (e.target as HTMLSelectElement).value;
-            console.log('Zmiana odbiorcy z:', this.selectedTarget, 'na:', newTarget);
             this.selectedTarget = newTarget;
             this.messages = []; // Wyczyść wiadomości przy zmianie odbiorcy
-            console.log('Wyczyszczono wiadomości, aktualnie:', this.messages.length);
             this.requestUpdate(); // Natychmiastowo odśwież widok
             this.fetchMessages(); // Pobierz nowe wiadomości
-          }}>
-            ${this.users.filter((u: ChatUser) => u.id !== this.user?.id).map((u: ChatUser) => html`
-              <option .value=${`user_${u.id}`} ?selected=${this.selectedTarget === `user_${u.id}`}>${u.username}</option>
-            `)}
-            <option .value=${'group_global'} ?selected=${this.selectedTarget === 'group_global'}>Grupa ogólna</option>
+          }} style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; width: 100%;">
+            <option value="">-- Wybierz --</option>
+            
+            <!-- Prywatne rozmowy -->
+            <optgroup label="Prywatne rozmowy">
+              ${this.users.filter((u: ChatUser) => u.id !== this.user?.id).map((u: ChatUser) => html`
+                <option .value=${`user_${u.id}`} ?selected=${this.selectedTarget === `user_${u.id}`}>${u.username}</option>
+              `)}
+            </optgroup>
+            
+            <!-- Moje grupy -->
+            ${this.groups.length > 0 ? html`
+              <optgroup label="Moje grupy">
+                ${this.groups.map((group: any) => html`
+                  <option .value=${`newgroup_${group.id}`} ?selected=${this.selectedTarget === `newgroup_${group.id}`}>
+                    ${group.name} (${group.members?.length || 0} osób)
+                  </option>
+                `)}
+              </optgroup>
+            ` : ''}
+            
+            <!-- Grupa ogólna -->
+            <optgroup label="Grupy systemowe">
+              <option .value=${'group_global'} ?selected=${this.selectedTarget === 'group_global'}>Grupa ogólna</option>
+            </optgroup>
           </select>
-        </label>
+          
+          <button 
+            type="button" 
+            @click=${() => this.showGroupCreation = true}
+            style="margin-top: 8px; padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%;"
+          >
+            + Utwórz nową grupę
+          </button>
+        </div>
+
+        <!-- Wiadomości -->
         <div class="chat-messages">
           ${this.messages.length === 0 ? html`
             <div style="text-align: center; color: #6b7280; font-style: italic; padding: 20px;">
-              Brak wiadomości. Rozpocznij konwersację!
+              ${this.selectedTarget ? 'Brak wiadomości. Rozpocznij konwersację!' : 'Wybierz odbiorcę aby zobaczyć wiadomości'}
             </div>
           ` : ''}
           ${this.messages.map((msg: any) => html`
@@ -320,14 +479,16 @@ class ChatBox extends LitElement {
             </div>
           `)}
         </div>
+
+        <!-- Formularz wysyłania -->
         <form @submit=${this.sendMessage.bind(this)} class="chat-form">
           <input
             .value=${this.input}
             @input=${(e: Event) => this.input = (e.target as HTMLInputElement).value}
             placeholder="Napisz wiadomość..."
-            ?disabled=${this.loading}
+            ?disabled=${this.loading || !this.selectedTarget}
           />
-          <button type="submit" ?disabled=${this.loading || !this.input.trim()}>Wyślij</button>
+          <button type="submit" ?disabled=${this.loading || !this.input.trim() || !this.selectedTarget}>Wyślij</button>
         </form>
       </div>
     `;

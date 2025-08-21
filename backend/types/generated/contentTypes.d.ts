@@ -369,6 +369,44 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiChatGroupChatGroup extends Struct.CollectionTypeSchema {
+  collectionName: 'chat_groups';
+  info: {
+    description: 'Grupa czatu dla wielu u\u017Cytkownik\u00F3w';
+    displayName: 'Chat Group';
+    pluralName: 'chat-groups';
+    singularName: 'chat-group';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    creator: Schema.Attribute.Relation<
+      'oneToOne',
+      'plugin::users-permissions.user'
+    > &
+      Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::chat-group.chat-group'
+    > &
+      Schema.Attribute.Private;
+    members: Schema.Attribute.Relation<
+      'manyToMany',
+      'plugin::users-permissions.user'
+    >;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiChatChatMessage extends Struct.CollectionTypeSchema {
   collectionName: 'chat_messages';
   info: {
@@ -976,6 +1014,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::chat-group.chat-group': ApiChatGroupChatGroup;
       'api::chat.chat-message': ApiChatChatMessage;
       'api::quiz.quiz': ApiQuizQuiz;
       'api::word.word': ApiWordWord;
