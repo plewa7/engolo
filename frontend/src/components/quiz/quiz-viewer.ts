@@ -1,5 +1,5 @@
 // @ts-ignore
-import quizViewerCss from "../styles/quiz-viewer.css?inline";
+import quizViewerCss from "../../styles/quiz-viewer.css?inline";
 class QuizViewer extends HTMLElement {
   shadow: ShadowRoot;
   quizId: string | null = null;

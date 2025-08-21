@@ -1,7 +1,7 @@
-import "../styles/auth-form.css";
+import "../../styles/auth-form.css";
 import { html, render } from "lit-html";
-import { login, register } from "../features/auth/auth.service";
-import { authStore } from "../features/auth/auth.store";
+import { login, register } from "../../features/auth/auth.service";
+import { authStore } from "../../features/auth/auth.store";
 
 class AuthForm extends HTMLElement {
   private mode: "login" | "register" = "login";

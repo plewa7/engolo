@@ -1,4 +1,4 @@
-import "./components/main-app.ts";
-import "./components/navbar-component.ts";
-import "./components/student-dashboard.ts";
-import "./components/teacher-dashboard.ts";
+import "./components/ui/main-app";
+import "./components/ui/navbar-component";
+import "./components/dashboard/student-dashboard";
+import "./components/dashboard/teacher-dashboard";

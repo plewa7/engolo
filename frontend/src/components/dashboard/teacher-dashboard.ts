@@ -1,9 +1,9 @@
 import "./dashboard-home";
-import "./quiz-list";
-import '../components/chat-box';
-import "./dictionary";
+import "../quiz/quiz-editor";
+import '../chat/chat-box';
+import "../ui/dictionary";
 
-export class StudentDashboard extends HTMLElement {
+export class TeacherDashboard extends HTMLElement {
   static get observedAttributes() {
     return ["section"];
   }
@@ -23,20 +23,16 @@ export class StudentDashboard extends HTMLElement {
     } else if (section === "challenges") {
       this.innerHTML = `
         <div>
-          <h2>Wyzwania - uczeń</h2>
-          <quiz-list></quiz-list>
+          <h2>Wyzwania - nauczyciel</h2>
+          <quiz-editor></quiz-editor>
         </div>
       `;
     } else if (section === "chat") {
-      this.innerHTML = `<section><h2>Czat - uczeń</h2><p>Rozmawiaj z nauczycielem lub innymi uczniami.</p><chat-box></chat-box></section>`;
+      this.innerHTML = `<section><h2>Czat - nauczyciel</h2><p>Komunikuj się z uczniami i innymi nauczycielami.</p><chat-box></chat-box></section>`;
     } else if (section === "stats") {
-      this.innerHTML = `<div><h2>Moje statystyki</h2><p>Śledź swoje postępy i wyniki.</p></div>`;
+      this.innerHTML = `<div><h2>Statystyki uczniów</h2><p>Przeglądaj postępy i wyniki uczniów.</p></div>`;
     } else if (section === "dictionary") {
-      this.innerHTML = `
-        <div>
-          <dictionary-component></dictionary-component>
-        </div>
-      `;
+      this.innerHTML = `<dictionary-component></dictionary-component>`;
     } else if (section === "notifications") {
       this.innerHTML = `<div><h2>Powiadomienia</h2><p>Automatyczne powiadomienia motywacyjne.</p></div>`;
     } else {
@@ -44,4 +40,4 @@ export class StudentDashboard extends HTMLElement {
     }
   }
 }
-customElements.define("student-dashboard", StudentDashboard);
+customElements.define("teacher-dashboard", TeacherDashboard);

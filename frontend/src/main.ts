@@ -1,4 +1,4 @@
-import "./components/auth-form";
+import "./components/auth/auth-form";
 import { authStore } from "./features/auth/auth.store";
 
 function renderHome() {

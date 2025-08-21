@@ -1,4 +1,4 @@
-import "./dictionary.css";
+import "../../styles/dictionary.css";
 
 interface DictionaryEntry {
   word: string;
