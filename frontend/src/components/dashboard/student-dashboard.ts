@@ -1,7 +1,9 @@
 import "./dashboard-home";
 import "../quiz/quiz-list";
+import "../quiz/challenges-tabs";
 import '../chat/chat-box';
 import "../ui/dictionary";
+import "./student-statistics";
 
 export class StudentDashboard extends HTMLElement {
   static get observedAttributes() {
@@ -22,15 +24,12 @@ export class StudentDashboard extends HTMLElement {
       this.innerHTML = `<dashboard-home></dashboard-home>`;
     } else if (section === "challenges") {
       this.innerHTML = `
-        <div>
-          <h2>Wyzwania - uczeń</h2>
-          <quiz-list></quiz-list>
-        </div>
+        <challenges-tabs></challenges-tabs>
       `;
     } else if (section === "chat") {
       this.innerHTML = `<section><h2>Czat - uczeń</h2><p>Rozmawiaj z nauczycielem lub innymi uczniami.</p><chat-box></chat-box></section>`;
     } else if (section === "stats") {
-      this.innerHTML = `<div><h2>Moje statystyki</h2><p>Śledź swoje postępy i wyniki.</p></div>`;
+      this.innerHTML = `<student-statistics></student-statistics>`;
     } else if (section === "dictionary") {
       this.innerHTML = `
         <div>

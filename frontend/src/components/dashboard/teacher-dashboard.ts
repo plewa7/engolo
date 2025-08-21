@@ -2,6 +2,7 @@ import "./dashboard-home";
 import "../quiz/quiz-editor";
 import '../chat/chat-box';
 import "../ui/dictionary";
+import "./teacher-statistics";
 
 export class TeacherDashboard extends HTMLElement {
   static get observedAttributes() {
@@ -30,7 +31,7 @@ export class TeacherDashboard extends HTMLElement {
     } else if (section === "chat") {
       this.innerHTML = `<section><h2>Czat - nauczyciel</h2><p>Komunikuj się z uczniami i innymi nauczycielami.</p><chat-box></chat-box></section>`;
     } else if (section === "stats") {
-      this.innerHTML = `<div><h2>Statystyki uczniów</h2><p>Przeglądaj postępy i wyniki uczniów.</p></div>`;
+      this.innerHTML = `<teacher-statistics></teacher-statistics>`;
     } else if (section === "dictionary") {
       this.innerHTML = `<dictionary-component></dictionary-component>`;
     } else if (section === "notifications") {

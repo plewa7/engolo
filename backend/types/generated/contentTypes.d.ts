@@ -446,6 +446,101 @@ export interface ApiChatChatMessage extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiExerciseStatisticExerciseStatistic
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'exercise_statistics';
+  info: {
+    description: 'Detailed statistics for language exercises';
+    displayName: 'Exercise Statistics';
+    pluralName: 'exercise-statistics';
+    singularName: 'exercise-statistic';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    attempts: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
+    category: Schema.Attribute.String & Schema.Attribute.Required;
+    completedAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    correctAnswer: Schema.Attribute.String & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    difficulty: Schema.Attribute.Enumeration<
+      ['beginner', 'intermediate', 'advanced']
+    >;
+    exerciseId: Schema.Attribute.String & Schema.Attribute.Required;
+    exerciseType: Schema.Attribute.Enumeration<
+      ['translation', 'vocabulary', 'grammar', 'listening']
+    > &
+      Schema.Attribute.Required;
+    isCorrect: Schema.Attribute.Boolean & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::exercise-statistic.exercise-statistic'
+    > &
+      Schema.Attribute.Private;
+    module: Schema.Attribute.Integer & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    question: Schema.Attribute.Text & Schema.Attribute.Required;
+    timeSpent: Schema.Attribute.Integer;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    userAnswer: Schema.Attribute.String;
+  };
+}
+
+export interface ApiQuizStatisticQuizStatistic
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'quiz_statistics';
+  info: {
+    description: 'Detailed statistics for teacher quizzes';
+    displayName: 'Quiz Statistic';
+    pluralName: 'quiz-statistics';
+    singularName: 'quiz-statistic';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    attempts: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
+    category: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'Quiz nauczyciela'>;
+    completedAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    correctAnswer: Schema.Attribute.String & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    exerciseType: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'teacher_quiz'>;
+    isCorrect: Schema.Attribute.Boolean & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::quiz-statistic.quiz-statistic'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    question: Schema.Attribute.Text & Schema.Attribute.Required;
+    quizId: Schema.Attribute.String & Schema.Attribute.Required;
+    timeSpent: Schema.Attribute.Integer & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    userAnswer: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 export interface ApiQuizQuiz extends Struct.CollectionTypeSchema {
   collectionName: 'quizzes';
   info: {
@@ -468,6 +563,47 @@ export interface ApiQuizQuiz extends Struct.CollectionTypeSchema {
     options: Schema.Attribute.JSON;
     publishedAt: Schema.Attribute.DateTime;
     question: Schema.Attribute.Text;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
+export interface ApiUserProgressUserProgress
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'user_progresses';
+  info: {
+    description: 'Tracks user progress in various exercises and activities';
+    displayName: 'User Progress';
+    pluralName: 'user-progresses';
+    singularName: 'user-progress';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    completedAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    exerciseId: Schema.Attribute.String & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::user-progress.user-progress'
+    > &
+      Schema.Attribute.Private;
+    metadata: Schema.Attribute.JSON;
+    publishedAt: Schema.Attribute.DateTime;
+    score: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    type: Schema.Attribute.Enumeration<
+      ['language_exercise', 'quiz', 'chat_activity']
+    > &
+      Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1016,7 +1152,10 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::chat-group.chat-group': ApiChatGroupChatGroup;
       'api::chat.chat-message': ApiChatChatMessage;
+      'api::exercise-statistic.exercise-statistic': ApiExerciseStatisticExerciseStatistic;
+      'api::quiz-statistic.quiz-statistic': ApiQuizStatisticQuizStatistic;
       'api::quiz.quiz': ApiQuizQuiz;
+      'api::user-progress.user-progress': ApiUserProgressUserProgress;
       'api::word.word': ApiWordWord;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
