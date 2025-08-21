@@ -1,6 +1,7 @@
-import "./dashboard-home.ts";
-import "./quiz-list.ts";
-import '../components/chat-box';
+import "./dashboard-home";
+import "../quiz/quiz-list";
+import '../chat/chat-box';
+import "../ui/dictionary";
 
 export class StudentDashboard extends HTMLElement {
   static get observedAttributes() {
@@ -31,7 +32,11 @@ export class StudentDashboard extends HTMLElement {
     } else if (section === "stats") {
       this.innerHTML = `<div><h2>Moje statystyki</h2><p>Śledź swoje postępy i wyniki.</p></div>`;
     } else if (section === "dictionary") {
-      this.innerHTML = `<div><h2>Słownik (Oxford API)</h2><p>Wyszukuj definicje i przykłady.</p></div>`;
+      this.innerHTML = `
+        <div>
+          <dictionary-component></dictionary-component>
+        </div>
+      `;
     } else if (section === "notifications") {
       this.innerHTML = `<div><h2>Powiadomienia</h2><p>Automatyczne powiadomienia motywacyjne.</p></div>`;
     } else {

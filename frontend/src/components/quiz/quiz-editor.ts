@@ -1,5 +1,5 @@
 // @ts-ignore
-import quizEditorCss from "../styles/quiz-editor.css?inline";
+import quizEditorCss from "../../styles/quiz-editor.css?inline";
 
 class QuizEditor extends HTMLElement {
   shadow: ShadowRoot;

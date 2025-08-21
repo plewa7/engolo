@@ -1,4 +1,4 @@
-import { authStore } from "../features/auth/auth.store";
+import { authStore } from "../../features/auth/auth.store";
 
 const dashboardImages = [
   {
@@ -28,7 +28,7 @@ export class DashboardHome extends HTMLElement {
     let user = authStore.getValue().user;
     if (!user) {
       try {
-        const { fetchUser } = await import("../features/auth/fetch-user.ts");
+        const { fetchUser } = await import("../../features/auth/fetch-user");
         user = await fetchUser();
       } catch {}
     }

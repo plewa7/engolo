@@ -3,8 +3,8 @@ export class MainApp extends HTMLElement {
   private currentSection: string = "dashboard";
 
   async connectedCallback() {
-    const { authStore } = await import("../features/auth/auth.store.ts");
-    const { fetchUser } = await import("../features/auth/fetch-user.ts");
+    const { authStore } = await import("../../features/auth/auth.store");
+    const { fetchUser } = await import("../../features/auth/fetch-user");
     const jwt = localStorage.getItem("strapi_jwt");
     if (!jwt) {
       window.location.replace("index.html");
@@ -45,7 +45,7 @@ export class MainApp extends HTMLElement {
         this.renderSection();
       });
       navbar.addEventListener("logout", () => {
-        import("../features/auth/auth.store.ts").then(({ logout }) => {
+        import("../../features/auth/auth.store").then(({ logout }) => {
           logout();
           window.location.replace("index.html");
         });
