@@ -85,7 +85,6 @@ class TeacherStatistics extends HTMLElement {
       }
 
       const users = await usersResponse.json();
-      console.log('Users API response:', users);
       this.allUsers = users;
       
       // Pobierz wszystkie statystyki ćwiczeń językowych
@@ -100,7 +99,6 @@ class TeacherStatistics extends HTMLElement {
       }
 
       const exerciseStats = await exerciseStatsResponse.json();
-      console.log('Exercise Statistics API response:', exerciseStats);
 
       // Pobierz wszystkie statystyki quizów
       const quizStatsResponse = await fetch('http://localhost:1337/api/quiz-statistics?populate=user&sort=completedAt:desc', {
@@ -114,14 +112,12 @@ class TeacherStatistics extends HTMLElement {
       }
 
       const quizStats = await quizStatsResponse.json();
-      console.log('Quiz Statistics API response:', quizStats);
 
       // Połącz wszystkie statystyki z oznaczeniem typu
       const allStats = [
         ...(exerciseStats.data || []).map((stat: any) => ({ ...stat, isQuiz: false })),
         ...(quizStats.data || []).map((stat: any) => ({ ...stat, isQuiz: true }))
       ];
-      console.log('Combined stats with quiz flags:', allStats);
       this.allStatistics = allStats;
       this.processTeacherStatistics(users, allStats);
 
@@ -135,27 +131,16 @@ class TeacherStatistics extends HTMLElement {
   }
 
   processTeacherStatistics(users: any[], rawStats: any[]) {
-      console.log('=== TEACHER STATISTICS DEBUG ===');
-      console.log('All users received:', users);
-      console.log('Raw statistics received:', rawStats.length);
       
       const studentUsers = users.filter(user => !user.isTeacher);
-      console.log('Filtered student users:', studentUsers);    // Filtruj tylko statystyki z prawidłową strukturą user
+    // Filtruj tylko statystyki z prawidłową strukturą user
     const validStats = rawStats.filter(item => {
-      console.log('Full statistic item structure:', item);
       
       // Teacher statistics otrzymuje płaską strukturę, nie Strapi v4 format
       const hasUser = item.user || (item.attributes?.user?.data?.id);
       
-      if (!hasUser) {
-        console.log('Skipping statistic without user:', item);
-      } else {
-        console.log('Valid statistic with user:', hasUser, item);
-      }
       return hasUser;
     });
-    
-    console.log('Valid statistics with users:', validStats);
     
     const exercises = validStats.map(item => {
       // Teacher statistics ma płaską strukturę, student statistics ma item.attributes
@@ -176,14 +161,8 @@ class TeacherStatistics extends HTMLElement {
         isCorrect: data.isCorrect !== undefined ? data.isCorrect : true
       };
       
-      if (data.quizId) {
-        console.log('Processing quiz item:', item, '=> processed:', processedItem);
-      }
-      
       return processedItem;
     });
-
-    console.log('Processed exercises:', exercises);
 
     // Podstawowe statystyki
     const studentGroups = this.groupBy(exercises.filter(ex => ex.userId), 'userId');
@@ -264,16 +243,6 @@ class TeacherStatistics extends HTMLElement {
       isQuiz: ex.isQuiz || false,
       quizId: ex.quizId
     }));
-
-    console.log('Recent activity items:', recentActivity);
-    console.log('Quiz activities found:', recentActivity.filter(a => a.isQuiz));
-    console.log('First quiz activity details:', recentActivity.find(a => a.isQuiz));
-    console.log('All activities sorted by date:', recentActivity.map(a => ({ 
-      name: a.studentName, 
-      type: a.isQuiz ? 'QUIZ' : 'EXERCISE', 
-      date: a.completedAt,
-      exerciseType: a.exerciseType 
-    })));
 
     this.statistics = {
       totalStudents,
@@ -481,8 +450,7 @@ class TeacherStatistics extends HTMLElement {
       <div class="section">
         <h3>📝 Ostatnia aktywność</h3>
         <div class="activity-list">
-          ${stats.recentActivity.slice(0, 20).map((activity, index) => {
-            console.log(`Rendering activity ${index}:`, activity);
+          ${stats.recentActivity.slice(0, 20).map((activity) => {
             return `
             <div class="activity-item ${activity.isQuiz ? 'quiz-activity' : ''}">
               <div class="activity-icon ${activity.isCorrect ? 'correct' : 'incorrect'}">
@@ -1309,8 +1277,6 @@ class TeacherStatistics extends HTMLElement {
       const userId = stat.userId || stat.user?.id || stat.attributes?.user?.data?.id;
       return userId && userId.toString() === this.selectedStudentId;
     });
-
-    console.log('Student stats for user', this.selectedStudentId, ':', studentStats);
 
     const studentExercises = studentStats.map(stat => {
       const data = stat.attributes || stat;

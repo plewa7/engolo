@@ -41,12 +41,10 @@ class LanguageExercises extends HTMLElement {
     // Każdy moduł ma 5 zadań, oblicz aktualny moduł na podstawie ukończonych zadań
     const completedCount = this.completed.length;
     this.currentModule = Math.floor(completedCount / this.exercisesPerModule) + 1;
-    console.log('Calculate module:', { completedCount, currentModule: this.currentModule, completed: this.completed });
   }
 
   async loadCompletedExercises() {
     const userId = this.getCurrentUserId();
-    console.log('Loading progress for user:', userId);
     
     // Zawsze ładuj z localStorage jako backup
     this.loadProgressFromLocalStorage(userId);
@@ -56,7 +54,6 @@ class LanguageExercises extends HTMLElement {
       try {
         await this.loadProgressFromBackend(userId);
       } catch (error) {
-        console.log('Błąd pobierania postępu z backend, używam localStorage:', error);
         // localStorage już załadowany wyżej
       }
     }
@@ -66,7 +63,6 @@ class LanguageExercises extends HTMLElement {
     try {
       const token = localStorage.getItem("strapi_jwt");
       if (!token) {
-        console.log('No JWT token, skipping backend sync');
         return;
       }
 
@@ -76,7 +72,6 @@ class LanguageExercises extends HTMLElement {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Backend user-progress data:', data);
         
         const backendCompleted = data.data
           .map((item: any) => {
@@ -84,8 +79,6 @@ class LanguageExercises extends HTMLElement {
             return attrs ? attrs.exerciseId : null;
           })
           .filter((id: any) => id != null) || [];
-        
-        console.log('Backend completed exercises:', backendCompleted);
         
         // Merge z localStorage - zawsze preferuj więcej ukończonych zadań
         const localCompleted = this.completed || [];
@@ -99,28 +92,23 @@ class LanguageExercises extends HTMLElement {
             completed: this.completed,
             lastUpdated: new Date().toISOString()
           }));
-          console.log('✅ Backend sync successful, merged progress:', { 
-            local: localCompleted.length, 
-            backend: backendCompleted.length, 
-            merged: mergedCompleted.length 
-          });
+          // Backend sync successful
         } else {
-          console.log('ℹ️ Local progress is up to date');
+          // Local progress is up to date
         }
       } else if (response.status === 403) {
-        console.log('⚠️ Backend permissions not set up yet, using localStorage only');
+        // Backend permissions not set up yet, using localStorage only
       } else {
-        console.log('⚠️ Backend response not ok:', response.status);
+        // Backend response not ok
       }
     } catch (error: any) {
-      console.log('⚠️ Backend sync failed, continuing with localStorage:', error?.message || error);
+      // Backend sync failed, continuing with localStorage
     }
   }
 
   loadProgressFromLocalStorage(userId: string) {
     const completed = localStorage.getItem(`completed_exercises_${userId}`);
     this.completed = completed ? JSON.parse(completed) : [];
-    console.log('Loaded from localStorage:', { userId, completed: this.completed });
   }
 
   async saveCompletedExercise(exerciseId: string) {
@@ -136,7 +124,7 @@ class LanguageExercises extends HTMLElement {
         try {
           await this.saveProgressToBackend(userId, exerciseId);
         } catch (error) {
-          console.log('Błąd zapisu do backend, zapisano tylko lokalnie');
+          // Error saving to backend, saved locally only
         }
       }
     }
@@ -162,12 +150,9 @@ class LanguageExercises extends HTMLElement {
       completedAt: new Date().toISOString()
     };
 
-    console.log('Sending exercise statistic data:', statisticData);
-
     try {
       const token = localStorage.getItem("strapi_jwt");
       if (!token) {
-        console.log('ℹ️ No token, statistics will be saved locally only');
         this.saveStatisticLocally(statisticData);
         return;
       }
@@ -181,21 +166,16 @@ class LanguageExercises extends HTMLElement {
         body: JSON.stringify({ data: statisticData })
       });
 
-      console.log('Exercise statistic response:', response.status, response.statusText);
       
       if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Exercise statistic saved to backend:', statisticData.exerciseId, result);
+        await response.json();
       } else if (response.status === 403) {
-        console.log('⚠️ Backend permissions not ready, saving locally:', statisticData.exerciseId);
         this.saveStatisticLocally(statisticData);
       } else {
-        const errorText = await response.text();
-        console.log('⚠️ Error saving to backend:', response.status, errorText);
+        await response.text();
         this.saveStatisticLocally(statisticData);
       }
     } catch (error: any) {
-      console.log('⚠️ Network error, saving locally:', error?.message || error);
       this.saveStatisticLocally(statisticData);
     }
   }
@@ -211,14 +191,12 @@ class LanguageExercises extends HTMLElement {
     }
     
     localStorage.setItem(storageKey, JSON.stringify(existing));
-    console.log('📱 Statistic saved locally');
   }
 
   async saveProgressToBackend(userId: string, exerciseId: string) {
     try {
       const token = localStorage.getItem("strapi_jwt");
       if (!token) {
-        console.log('ℹ️ No token, progress saved locally only');
         return;
       }
 
@@ -240,14 +218,14 @@ class LanguageExercises extends HTMLElement {
       });
 
       if (response.ok) {
-        console.log('✅ Progress saved to backend:', exerciseId);
+        // Progress saved to backend successfully
       } else if (response.status === 403) {
-        console.log('⚠️ Backend permissions not ready for progress sync');
+        // Backend permissions not ready for progress sync
       } else {
-        console.log('⚠️ Error saving progress to backend:', response.status);
+        // Error saving progress to backend
       }
     } catch (error: any) {
-      console.log('⚠️ Network error saving progress:', error?.message || error);
+      // Network error saving progress
     }
   }
 
@@ -298,7 +276,6 @@ class LanguageExercises extends HTMLElement {
       
       this.render();
     } catch (error) {
-      console.log('Błąd pobierania z API, używam tylko lokalnych zadań');
       this.generateLocalExercises();
     }
   }
@@ -339,11 +316,11 @@ class LanguageExercises extends HTMLElement {
             }
           }
         } catch (wordError) {
-          console.log(`Błąd pobierania słowa ${word}:`, wordError);
+          // Error fetching word, skip it
         }
       }
     } catch (error) {
-      console.log('Błąd API słownika:', error);
+      // Dictionary API error
     }
 
     // Dodaj zadania z lokalnego źródła jeśli API nie działa
@@ -650,7 +627,6 @@ class LanguageExercises extends HTMLElement {
 
   updateCheckButton() {
     // Usunięto logikę disabled - przycisk zawsze jest aktywny
-    console.log('Input value updated:', this.selectedAnswer); // Debug
   }
 
   checkAnswer() {
@@ -930,7 +906,6 @@ class LanguageExercises extends HTMLElement {
           input.addEventListener('input', (e) => {
             const target = e.target as HTMLInputElement;
             this.selectedAnswer = target.value;
-            console.log('Input value:', this.selectedAnswer); // Debug
             this.updateCheckButton();
           });
           

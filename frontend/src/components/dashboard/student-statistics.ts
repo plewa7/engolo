@@ -59,16 +59,13 @@ class StudentStatistics extends HTMLElement {
   async loadStatistics() {
     try {
       const userId = this.getCurrentUserId();
-      console.log('Student statistics - current user ID:', userId);
       
       if (userId === "anon") {
-        console.log('User not logged in, showing login required');
         this.showLoginRequired();
         return;
       }
 
       const token = localStorage.getItem("strapi_jwt");
-      console.log('JWT token exists:', !!token);
       let statisticsData: any[] = [];
 
       // Spróbuj pobrać z backend'u
@@ -90,49 +87,34 @@ class StudentStatistics extends HTMLElement {
           if (exerciseResponse.ok) {
             const data = await exerciseResponse.json();
             exerciseData = data.data || [];
-            console.log('✅ Exercise statistics loaded from backend:', exerciseData.length);
           } else if (exerciseResponse.status === 403) {
-            console.log('⚠️ Exercise stats permissions not ready, using localStorage');
             exerciseData = this.loadStatisticsFromLocalStorage(userId, 'exercise_statistics');
           } else {
-            console.log('⚠️ Exercise stats backend error, using localStorage');
             exerciseData = this.loadStatisticsFromLocalStorage(userId, 'exercise_statistics');
           }
 
           if (quizResponse.ok) {
             const data = await quizResponse.json();
             quizData = data.data || [];
-            console.log('✅ Quiz statistics loaded from backend:', quizData.length);
           } else if (quizResponse.status === 403) {
-            console.log('⚠️ Quiz stats permissions not ready, using localStorage');
             quizData = this.loadStatisticsFromLocalStorage(userId, 'quiz_statistics');
           } else {
-            console.log('⚠️ Quiz stats backend error, using localStorage');
             quizData = this.loadStatisticsFromLocalStorage(userId, 'quiz_statistics');
           }
 
           // Combine both types of statistics
           statisticsData = [...exerciseData, ...quizData];
-          console.log('✅ Combined statistics loaded:', {
-            exercises: exerciseData.length,
-            quizzes: quizData.length,
-            total: statisticsData.length
-          });
 
         } catch (error) {
-          console.log('⚠️ Network error, using localStorage');
           const exerciseData = this.loadStatisticsFromLocalStorage(userId, 'exercise_statistics');
           const quizData = this.loadStatisticsFromLocalStorage(userId, 'quiz_statistics');
           statisticsData = [...exerciseData, ...quizData];
         }
       } else {
-        console.log('ℹ️ No token, using localStorage only');
         const exerciseData = this.loadStatisticsFromLocalStorage(userId, 'exercise_statistics');
         const quizData = this.loadStatisticsFromLocalStorage(userId, 'quiz_statistics');
         statisticsData = [...exerciseData, ...quizData];
-      }
-
-      this.processStatistics(statisticsData);
+      }      this.processStatistics(statisticsData);
     } catch (error) {
       console.error('Error loading statistics:', error);
       this.showError("Błąd połączenia");
@@ -153,7 +135,6 @@ class StudentStatistics extends HTMLElement {
   }
 
   processStatistics(rawData: any[]) {
-    console.log('Processing statistics, raw data:', rawData);
     
     if (!rawData || rawData.length === 0) {
       this.statistics = {
@@ -171,17 +152,12 @@ class StudentStatistics extends HTMLElement {
     const allStats = rawData.map(item => {
       // Obsługuj zarówno format backend (item.attributes) jak i localStorage (bezpośrednio)
       const data = item.attributes || item;
-      console.log('Statistic data:', data);
       return data;
     }).filter(stat => stat && typeof stat === 'object'); // Odfiltruj nieprawidłowe dane
-
-    console.log('Processed statistics:', allStats);
     
     // Rozdziel na ćwiczenia językowe i quizy nauczyciela
     const exercises = allStats.filter(stat => stat.exerciseType && !stat.quizId);
     const quizzes = allStats.filter(stat => stat.quizId);
-    
-    console.log('Separated data:', { exercises: exercises.length, quizzes: quizzes.length });
     
     if (allStats.length === 0) {
       this.statistics = {

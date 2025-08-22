@@ -34,7 +34,7 @@ export class Dictionary extends HTMLElement {
       // Głosy mogą nie być dostępne od razu
       if (speechSynthesis.getVoices().length === 0) {
         speechSynthesis.addEventListener('voiceschanged', () => {
-          console.log('Speech synthesis voices loaded');
+          // Speech synthesis voices loaded
         });
       }
     }

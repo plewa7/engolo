@@ -181,7 +181,6 @@ class QuizViewer extends HTMLElement {
     try {
       const token = localStorage.getItem("strapi_jwt");
       if (!token) {
-        console.log('ℹ️ No token, quiz statistics will be saved locally only');
         this.saveQuizStatisticLocally(statisticData);
         return;
       }
@@ -196,16 +195,13 @@ class QuizViewer extends HTMLElement {
       });
 
       if (response.ok) {
-        console.log('✅ Quiz statistic saved to backend:', statisticData.quizId);
+        // Quiz statistic saved successfully
       } else if (response.status === 403) {
-        console.log('⚠️ Backend permissions not ready, saving quiz stats locally:', statisticData.quizId);
         this.saveQuizStatisticLocally(statisticData);
       } else {
-        console.log('⚠️ Error saving quiz to backend:', response.status);
         this.saveQuizStatisticLocally(statisticData);
       }
     } catch (error: any) {
-      console.log('⚠️ Network error, saving quiz locally:', error?.message || error);
       this.saveQuizStatisticLocally(statisticData);
     }
   }
@@ -221,7 +217,6 @@ class QuizViewer extends HTMLElement {
     }
     
     localStorage.setItem(storageKey, JSON.stringify(existing));
-    console.log('📱 Quiz statistic saved locally');
   }
 }
 customElements.define("quiz-viewer", QuizViewer);
