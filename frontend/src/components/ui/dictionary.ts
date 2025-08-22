@@ -94,7 +94,7 @@ export class Dictionary extends HTMLElement {
 
         <div class="tab-content hidden" id="favorites-tab">
           <div class="favorites-section">
-            <div class="section-header">
+            <div class="section-header-with-actions">
               <h4>Ulubione słowa</h4>
               <button id="clear-favorites" class="btn-secondary">�️ Wyczyść</button>
             </div>
@@ -104,7 +104,7 @@ export class Dictionary extends HTMLElement {
 
         <div class="tab-content hidden" id="history-tab">
           <div class="history-section">
-            <div class="section-header">
+            <div class="section-header-with-actions">
               <h4>Historia wyszukiwań</h4>
               <button id="clear-history" class="btn-secondary">🗑️ Wyczyść</button>
             </div>

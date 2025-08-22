@@ -1,4 +1,6 @@
-﻿interface TeacherStatisticData {
+﻿import "../../styles/globals.css";
+
+interface TeacherStatisticData {
   totalStudents: number;
   totalExercises: number;
   averageProgress: number;
@@ -604,35 +606,35 @@ class TeacherStatistics extends HTMLElement {
   getStyles() {
     return `
       <style>
-        .stats-container {
-          max-width: 1000px;
-          margin: 0 auto;
-          padding: 20px;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
+        /* Global section-header styles */
         .section-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 15px;
+          text-align: center;
           margin-bottom: 30px;
           opacity: 0;
           animation: fadeInUp 0.6s ease forwards;
-          flex-wrap: wrap;
         }
 
         .section-header h2 {
           color: var(--text-primary);
-          margin: 0;
+          margin: 0 0 10px 0;
           font-size: 28px;
           font-weight: 600;
+          line-height: 1.2;
         }
 
         .section-header p {
           color: var(--text-secondary);
           margin: 0;
           font-size: 16px;
+          font-weight: 400;
+          line-height: 1.5;
+        }
+
+        .stats-container {
+          max-width: 1000px;
+          margin: 0 auto;
+          padding: 20px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         .loading, .no-data {

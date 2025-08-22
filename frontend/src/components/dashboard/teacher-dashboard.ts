@@ -1,3 +1,4 @@
+import "../../styles/globals.css";
 import "./dashboard-home";
 import "../quiz/quiz-editor";
 import '../chat/chat-box';
@@ -112,7 +113,7 @@ export class TeacherDashboard extends HTMLElement {
           }
           
           .section-header p {
-            color: #666;
+            color: var(--text-secondary);
             margin: 0;
             font-size: 16px;
           }
@@ -170,7 +171,7 @@ export class TeacherDashboard extends HTMLElement {
           }
           
           .section-header p {
-            color: #666;
+            color: var(--text-secondary);
             margin: 0;
             font-size: 16px;
           }
@@ -232,7 +233,7 @@ export class TeacherDashboard extends HTMLElement {
           }
           
           .section-header p {
-            color: #666;
+            color: var(--text-secondary);
             margin: 0;
             font-size: 16px;
           }
@@ -272,7 +273,7 @@ export class TeacherDashboard extends HTMLElement {
           
           .notification-content p {
             margin: 0;
-            color: #666;
+            color: var(--text-secondary);
             line-height: 1.6;
           }
           

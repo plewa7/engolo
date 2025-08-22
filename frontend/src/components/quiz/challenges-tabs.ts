@@ -1,3 +1,4 @@
+import "../../styles/globals.css";
 import "./quiz-list";
 import "./language-exercises";
 
@@ -27,26 +28,6 @@ class ChallengesTabs extends HTMLElement {
           margin: 0 auto;
           padding: 20px;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        .challenges-header {
-          text-align: center;
-          margin-bottom: 30px;
-          opacity: 0;
-          animation: fadeInUp 0.6s ease forwards;
-        }
-
-        .challenges-header h2 {
-          color: var(--text-primary);
-          margin-bottom: 10px;
-          font-size: 28px;
-          font-weight: 600;
-        }
-
-        .challenges-header p {
-          color: #666;
-          margin: 0;
-          font-size: 16px;
         }
 
         .tabs {
@@ -193,7 +174,7 @@ class ChallengesTabs extends HTMLElement {
       </style>
 
       <div class="challenges-container">
-        <div class="challenges-header">
+        <div class="section-header">
           <h2>🎓 Wyzwania i Zadania</h2>
           <p>Rozwijaj swoje umiejętności językowe poprzez różnorodne ćwiczenia</p>
         </div>

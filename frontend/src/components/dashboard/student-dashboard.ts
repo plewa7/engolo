@@ -1,3 +1,4 @@
+import "../../styles/globals.css";
 import "./dashboard-home";
 import "../quiz/quiz-list";
 import "../quiz/challenges-tabs";
@@ -42,26 +43,6 @@ export class StudentDashboard extends HTMLElement {
             margin: 0 auto;
             padding: 20px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          }
-          
-          .section-header {
-            text-align: center;
-            margin-bottom: 30px;
-            opacity: 0;
-            animation: fadeInUp 0.6s ease forwards;
-          }
-          
-          .section-header h2 {
-            color: var(--text-primary);
-            margin-bottom: 10px;
-            font-size: 28px;
-            font-weight: 600;
-          }
-          
-          .section-header p {
-            color: var(--text-secondary);
-            margin: 0;
-            font-size: 16px;
           }
           
           .section-content {
@@ -117,7 +98,7 @@ export class StudentDashboard extends HTMLElement {
           }
           
           .section-header p {
-            color: #666;
+            color: var(--text-secondary);
             margin: 0;
             font-size: 16px;
           }
@@ -164,26 +145,6 @@ export class StudentDashboard extends HTMLElement {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           }
           
-          .section-header {
-            text-align: center;
-            margin-bottom: 30px;
-            opacity: 0;
-            animation: fadeInUp 0.6s ease forwards;
-          }
-          
-          .section-header h2 {
-            color: var(--text-primary);
-            margin-bottom: 10px;
-            font-size: 28px;
-            font-weight: 600;
-          }
-          
-          .section-header p {
-            color: #666;
-            margin: 0;
-            font-size: 16px;
-          }
-          
           .section-content {
             opacity: 0;
             animation: fadeInUp 0.6s ease 0.2s forwards;
@@ -219,7 +180,7 @@ export class StudentDashboard extends HTMLElement {
           
           .notification-content p {
             margin: 0;
-            color: #666;
+            color: var(--text-secondary);
             line-height: 1.6;
           }
           

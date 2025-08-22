@@ -1,3 +1,5 @@
+@import 'globals.css';
+
 .dictionary-container {
   max-width: 900px;
   margin: 0 auto;
@@ -108,19 +110,6 @@
 .history-section,
 .tools-section {
   padding: 20px;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.section-header h4 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 1.4rem;
 }
 
 .btn-secondary,
