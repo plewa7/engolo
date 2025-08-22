@@ -5,7 +5,8 @@ export class NavbarComponent extends HTMLElement {
 
   role: string = "student";
   currentSection: string = "dashboard";
-  sections: Array<{ key: string; label: string }> = [];
+  sections: Array<{ key: string; label: string; icon: string }> = [];
+  mobileMenuOpen: boolean = false;
 
   connectedCallback() {
     this.updateSections();
@@ -19,6 +20,7 @@ export class NavbarComponent extends HTMLElement {
       this.setAttribute("current-section", "dashboard");
     }
     this.render();
+    this.setupEventListeners();
   }
 
   attributeChangedCallback(name: string, newValue: string) {
@@ -35,27 +37,96 @@ export class NavbarComponent extends HTMLElement {
   updateSections() {
     if (this.role === "teacher") {
       this.sections = [
-        { key: "dashboard", label: "Panel główny" },
-        { key: "challenges", label: "Wyzwania" },
-        { key: "chat", label: "Czat" },
-        { key: "stats", label: "Statystyki uczniów" },
-        { key: "dictionary", label: "Słownik" },
-        { key: "notifications", label: "Powiadomienia" },
+        { key: "challenges", label: "Wyzwania", icon: "📝" },
+        { key: "chat", label: "Czat", icon: "💬" },
+        { key: "stats", label: "Statystyki uczniów", icon: "📊" },
+        { key: "dictionary", label: "Słownik", icon: "📚" },
+        { key: "notifications", label: "Powiadomienia", icon: "🔔" },
       ];
     } else {
       this.sections = [
-        { key: "dashboard", label: "Panel główny" },
-        { key: "challenges", label: "Wyzwania" },
-        { key: "chat", label: "Czat" },
-        { key: "stats", label: "Moje statystyki" },
-        { key: "dictionary", label: "Słownik" },
-        { key: "notifications", label: "Powiadomienia" },
+        { key: "challenges", label: "Wyzwania", icon: "🎯" },
+        { key: "chat", label: "Czat", icon: "💬" },
+        { key: "stats", label: "Moje statystyki", icon: "📊" },
+        { key: "dictionary", label: "Słownik", icon: "📚" },
+        { key: "notifications", label: "Powiadomienia", icon: "🔔" },
       ];
     }
   }
 
-  render() {
+  setupEventListeners() {
+    // Close mobile menu when window resizes
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768) {
+        this.closeMobileMenu();
+      }
+    });
+  }
 
+  toggleMobileMenu() {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+    const mobileDropdown = this.querySelector('.mobile-dropdown');
+    const hamburgerMenu = this.querySelector('.hamburger-menu');
+    const mobileOverlay = this.querySelector('.mobile-overlay');
+    
+    if (mobileDropdown) {
+      mobileDropdown.classList.toggle('open', this.mobileMenuOpen);
+    }
+    
+    if (hamburgerMenu) {
+      hamburgerMenu.classList.toggle('open', this.mobileMenuOpen);
+    }
+    
+    if (mobileOverlay) {
+      mobileOverlay.classList.toggle('open', this.mobileMenuOpen);
+    }
+    
+    // Prevent body scroll when menu is open
+    document.body.style.overflow = this.mobileMenuOpen ? 'hidden' : '';
+  }
+
+  closeMobileMenu() {
+    this.mobileMenuOpen = false;
+    const mobileDropdown = this.querySelector('.mobile-dropdown');
+    const hamburgerMenu = this.querySelector('.hamburger-menu');
+    const mobileOverlay = this.querySelector('.mobile-overlay');
+    
+    if (mobileDropdown) {
+      mobileDropdown.classList.remove('open');
+    }
+    
+    if (hamburgerMenu) {
+      hamburgerMenu.classList.remove('open');
+    }
+    
+    if (mobileOverlay) {
+      mobileOverlay.classList.remove('open');
+    }
+    
+    document.body.style.overflow = '';
+  }
+
+  toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    // Update theme toggle icons in both desktop and mobile
+    const desktopThemeToggle = this.querySelector('.theme-toggle-btn .nav-icon');
+    const mobileThemeToggle = this.querySelector('.mobile-theme-btn .nav-icon');
+    const newIcon = newTheme === 'dark' ? '☀️' : '🌙';
+    
+    if (desktopThemeToggle) {
+      desktopThemeToggle.textContent = newIcon;
+    }
+    if (mobileThemeToggle) {
+      mobileThemeToggle.textContent = newIcon;
+    }
+  }
+
+  render() {
     const nav = this.querySelector("nav.navbar");
     if (nav) {
       // Aktualizuj klasy aktywności przycisków
@@ -73,17 +144,111 @@ export class NavbarComponent extends HTMLElement {
     this.innerHTML = `
       <link rel="stylesheet" href="/src/styles/navbar.css">
       <nav class="navbar">
-        ${this.sections
-          .map(
-            (s) =>
-              `<button class="nav-btn${
-                s.key === this.currentSection ? " active" : ""
-              }" data-section="${s.key}">${s.label}</button>`
-          )
-          .join("")}
-        <button class="logout-btn">Wyloguj</button>
+        <!-- Left: Brand -->
+        <div class="navbar-left">
+          <div class="navbar-brand" role="button" tabindex="0" aria-label="Przejdź do strony głównej">
+            <div class="brand-mascot">🦉</div>
+            <div class="brand-name">Engolo</div>
+          </div>
+        </div>
+        
+        <!-- Center: Navigation (Desktop) -->
+        <div class="navbar-center">
+          ${this.sections
+            .map(
+              (s) =>
+                `<button class="nav-btn${
+                  s.key === this.currentSection ? " active" : ""
+                }" data-section="${s.key}">
+                  <span class="nav-icon">${s.icon}</span>
+                  <span class="nav-label">${s.label}</span>
+                </button>`
+            )
+            .join("")}
+        </div>
+        
+        <!-- Right: Theme + Logout (Desktop) -->
+        <div class="navbar-right">
+          <button class="theme-toggle-btn">
+            <span class="nav-icon">${document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'}</span>
+            <span class="nav-label">Motyw</span>
+          </button>
+          <button class="logout-btn">
+            <span class="nav-icon">🚪</span>
+            <span class="nav-label">Wyloguj</span>
+          </button>
+        </div>
+        
+        <!-- Mobile: Hamburger Menu -->
+        <button class="hamburger-menu" aria-label="Toggle menu">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+        
+        <!-- Mobile: Dropdown Menu -->
+        <div class="mobile-dropdown">
+          ${this.sections
+            .map(
+              (s) =>
+                `<button class="mobile-nav-btn${
+                  s.key === this.currentSection ? " active" : ""
+                }" data-section="${s.key}">
+                  <span class="nav-icon">${s.icon}</span>
+                  <span class="nav-label">${s.label}</span>
+                </button>`
+            )
+            .join("")}
+          <button class="mobile-theme-btn">
+            <span class="nav-icon">${document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'}</span>
+            <span class="nav-label">Motyw</span>
+          </button>
+          <button class="mobile-logout-btn">
+            <span class="nav-icon">🚪</span>
+            <span class="nav-label">Wyloguj</span>
+          </button>
+        </div>
       </nav>
+      <div class="mobile-overlay"></div>
     `;
+    
+    // Add brand click listener
+    this.querySelector('.navbar-brand')?.addEventListener('click', () => {
+      if (this.currentSection !== 'dashboard') {
+        this.currentSection = 'dashboard';
+        this.setAttribute('current-section', 'dashboard');
+        window.location.hash = 'dashboard';
+        this.closeMobileMenu();
+        this.dispatchEvent(
+          new CustomEvent("navigate", {
+            detail: { section: 'dashboard' },
+            bubbles: true,
+          })
+        );
+      }
+    });
+
+    // Add keyboard support for brand
+    this.querySelector('.navbar-brand')?.addEventListener('keydown', (e: Event) => {
+      const keyboardEvent = e as KeyboardEvent;
+      if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+        e.preventDefault();
+        if (this.currentSection !== 'dashboard') {
+          this.currentSection = 'dashboard';
+          this.setAttribute('current-section', 'dashboard');
+          window.location.hash = 'dashboard';
+          this.closeMobileMenu();
+          this.dispatchEvent(
+            new CustomEvent("navigate", {
+              detail: { section: 'dashboard' },
+              bubbles: true,
+            })
+          );
+        }
+      }
+    });
+    
+    // Add navigation listeners (desktop)
     this.querySelectorAll(".nav-btn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         const section = (e.currentTarget as HTMLElement).dataset.section;
@@ -91,6 +256,7 @@ export class NavbarComponent extends HTMLElement {
           this.currentSection = section;
           this.setAttribute("current-section", section);
           window.location.hash = section;
+          this.closeMobileMenu();
         }
         this.dispatchEvent(
           new CustomEvent("navigate", {
@@ -100,9 +266,57 @@ export class NavbarComponent extends HTMLElement {
         );
       });
     });
+
+    // Add navigation listeners (mobile)
+    this.querySelectorAll(".mobile-nav-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const section = (e.currentTarget as HTMLElement).dataset.section;
+        if (section && section !== this.currentSection) {
+          this.currentSection = section;
+          this.setAttribute("current-section", section);
+          window.location.hash = section;
+          this.closeMobileMenu();
+        }
+        this.dispatchEvent(
+          new CustomEvent("navigate", {
+            detail: { section },
+            bubbles: true,
+          })
+        );
+      });
+    });
+
+    // Theme toggle listeners (desktop + mobile)
+    this.querySelector(".theme-toggle-btn")?.addEventListener("click", () => {
+      this.toggleTheme();
+    });
+    
+    this.querySelector(".mobile-theme-btn")?.addEventListener("click", () => {
+      this.toggleTheme();
+    });
+
+    // Logout listeners (desktop + mobile)
     this.querySelector(".logout-btn")?.addEventListener("click", () => {
+      this.closeMobileMenu();
       this.dispatchEvent(new CustomEvent("logout", { bubbles: true }));
     });
+    
+    this.querySelector(".mobile-logout-btn")?.addEventListener("click", () => {
+      this.closeMobileMenu();
+      this.dispatchEvent(new CustomEvent("logout", { bubbles: true }));
+    });
+
+    // Hamburger menu toggle
+    this.querySelector(".hamburger-menu")?.addEventListener("click", () => {
+      this.toggleMobileMenu();
+    });
+
+    // Mobile overlay click to close
+    this.querySelector(".mobile-overlay")?.addEventListener("click", () => {
+      this.closeMobileMenu();
+    });
+
+    this.setupEventListeners();
   }
 }
 

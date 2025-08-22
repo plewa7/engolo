@@ -1055,7 +1055,7 @@ class LanguageExercises extends HTMLElement {
 
         .exercise-question h3 {
           margin: 0;
-          color: #333;
+          color: var(--text-primary);
           line-height: 1.4;
         }
 
@@ -1067,23 +1067,24 @@ class LanguageExercises extends HTMLElement {
 
         .option-btn {
           padding: 12px 16px;
-          border: 2px solid #e0e0e0;
+          border: 2px solid var(--border-color);
           border-radius: 8px;
-          background: white;
+          background: var(--card-bg);
+          color: var(--text-primary);
           cursor: pointer;
           transition: all 0.2s ease;
           text-align: left;
         }
 
         .option-btn:hover {
-          border-color: #2196F3;
-          background: #f8f9ff;
+          border-color: var(--primary);
+          background: var(--bg-tertiary);
         }
 
         .option-btn.selected {
-          border-color: #2196F3;
-          background: #e3f2fd;
-          color: #1976D2;
+          border-color: var(--primary);
+          background: var(--bg-tertiary);
+          color: var(--primary);
         }
 
         .exercise-input {
@@ -1136,24 +1137,31 @@ class LanguageExercises extends HTMLElement {
           padding: 20px;
           border-radius: 8px;
           text-align: center;
+          color: var(--text-primary);
         }
 
         .result-content.correct {
-          background: #e8f5e8;
-          border: 2px solid #4CAF50;
+          background: var(--success-bg, #e8f5e8);
+          border: 2px solid var(--success, #4CAF50);
         }
 
         .result-content.incorrect {
-          background: #ffeaea;
-          border: 2px solid #f44336;
+          background: var(--error-bg, #ffeaea);
+          border: 2px solid var(--error, #f44336);
         }
 
         .result-content h3 {
           margin: 0 0 10px 0;
+          color: var(--text-primary);
+        }
+
+        .result-content p {
+          color: var(--text-primary);
+          margin: 8px 0;
         }
 
         .result-content button {
-          background: #2196F3;
+          background: var(--primary);
           color: white;
           border: none;
           padding: 10px 20px;
@@ -1163,7 +1171,7 @@ class LanguageExercises extends HTMLElement {
         }
 
         .result-content button:hover {
-          background: #1976D2;
+          background: var(--primary-dark);
         }
 
         .final-score, .no-exercises {

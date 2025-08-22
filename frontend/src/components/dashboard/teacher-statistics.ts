@@ -1,4 +1,4 @@
-interface TeacherStatisticData {
+﻿interface TeacherStatisticData {
   totalStudents: number;
   totalExercises: number;
   averageProgress: number;
@@ -365,7 +365,7 @@ class TeacherStatistics extends HTMLElement {
     this.shadow.innerHTML = `
       ${this.getStyles()}
       <div class="stats-container">
-        <div class="stats-header">
+        <div class="section-header">
           <h2>👩‍🏫 Statystyki Uczniów</h2>
           <p>Przegląd postępów wszystkich uczniów</p>
         </div>
@@ -605,60 +605,92 @@ class TeacherStatistics extends HTMLElement {
     return `
       <style>
         .stats-container {
-          max-width: 1200px;
+          max-width: 1000px;
           margin: 0 auto;
           padding: 20px;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
-        .stats-header {
-          text-align: center;
+        .section-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 15px;
           margin-bottom: 30px;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease forwards;
+          flex-wrap: wrap;
         }
 
-        .stats-header h2 {
-          color: #333;
-          margin-bottom: 10px;
-        }
-
-        .stats-header p {
-          color: #666;
+        .section-header h2 {
+          color: var(--text-primary);
           margin: 0;
+          font-size: 28px;
+          font-weight: 600;
+        }
+
+        .section-header p {
+          color: var(--text-secondary);
+          margin: 0;
+          font-size: 16px;
         }
 
         .loading, .no-data {
           text-align: center;
           padding: 60px 20px;
-          color: #666;
+          color: var(--text-secondary);
         }
 
         .nav-tabs {
           display: flex;
-          gap: 10px;
+          background: var(--card-bg);
+          border-radius: 12px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           margin-bottom: 30px;
-          border-bottom: 2px solid #f0f0f0;
+          overflow: hidden;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease 0.2s forwards;
         }
 
         .nav-tab {
-          padding: 12px 20px;
+          flex: 1;
+          padding: 18px 24px;
           border: none;
-          background: none;
+          background: transparent;
           cursor: pointer;
-          font-size: 14px;
-          color: #666;
-          border-bottom: 3px solid transparent;
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--text-secondary);
           transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .nav-tab::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+          transition: left 0.6s ease;
+        }
+
+        .nav-tab:hover::before {
+          left: 100%;
         }
 
         .nav-tab:hover {
-          color: #2196F3;
-          background: #f8f9fa;
+          background: var(--bg-tertiary);
+          color: var(--text-primary);
+          transform: translateY(-2px);
         }
 
         .nav-tab.active {
-          color: #2196F3;
-          border-bottom-color: #2196F3;
-          font-weight: 500;
+          color: var(--primary);
+          background: var(--bg-tertiary);
+          border-bottom: 3px solid var(--primary);
         }
 
         .stats-grid {
@@ -666,23 +698,31 @@ class TeacherStatistics extends HTMLElement {
           grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
           gap: 20px;
           margin-bottom: 40px;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease 0.4s forwards;
         }
 
         .stat-card {
-          background: white;
+          background: var(--card-bg);
           border-radius: 12px;
           padding: 20px;
           display: flex;
           align-items: center;
           gap: 15px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          box-shadow: var(--card-shadow);
           border-left: 4px solid;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .stat-card.primary { border-left-color: #2196F3; }
-        .stat-card.success { border-left-color: #4CAF50; }
-        .stat-card.info { border-left-color: #FF9800; }
-        .stat-card.warning { border-left-color: #F44336; }
+        .stat-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .stat-card.primary { border-left-color: var(--primary); }
+        .stat-card.success { border-left-color: var(--success); }
+        .stat-card.info { border-left-color: var(--warning); }
+        .stat-card.warning { border-left-color: var(--error); }
 
         .stat-icon {
           font-size: 24px;
@@ -692,34 +732,204 @@ class TeacherStatistics extends HTMLElement {
           align-items: center;
           justify-content: center;
           border-radius: 50%;
-          background: #f5f5f5;
+          background: var(--bg-tertiary);
         }
 
         .stat-content h3 {
           margin: 0;
           font-size: 24px;
-          color: #333;
+          color: var(--text-primary);
         }
 
         .stat-content p {
           margin: 5px 0 0 0;
-          color: #666;
+          color: var(--text-secondary);
           font-size: 14px;
         }
 
         .section {
           margin-bottom: 40px;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease 0.6s forwards;
         }
 
         .section h3 {
-          color: #333;
+          color: var(--text-primary);
           margin-bottom: 20px;
           padding-bottom: 10px;
-          border-bottom: 2px solid #f0f0f0;
+          border-bottom: 2px solid var(--border-color);
+          font-size: 20px;
+          font-weight: 600;
+        }
+
+        /* Animacje */
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        /* Style dla kart uczniów */
+        .students-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+          gap: 20px;
+        }
+
+        .student-card {
+          background: var(--card-bg);
+          border-radius: 12px;
+          padding: 20px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .student-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .student-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 15px;
+        }
+
+        .student-name {
+          font-size: 18px;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin: 0;
+        }
+
+        .accuracy-badge {
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .accuracy-badge.high { 
+          background: var(--success-bg); 
+          color: var(--success); 
+        }
+        .accuracy-badge.medium { 
+          background: var(--warning-bg); 
+          color: var(--warning); 
+        }
+        .accuracy-badge.low { 
+          background: var(--error-bg); 
+          color: var(--error); 
+        }
+
+        .student-stats {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+          margin-bottom: 15px;
+        }
+
+        .student-stat {
+          text-align: center;
+          padding: 8px;
+          background: var(--bg-tertiary);
+          border-radius: 8px;
+        }
+
+        .student-stat-value {
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin: 0;
+        }
+
+        .student-stat-label {
+          font-size: 11px;
+          color: var(--text-secondary);
+          margin: 2px 0 0 0;
+        }
+
+        .view-student-btn {
+          width: 100%;
+          padding: 8px 16px;
+          background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .view-student-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        }
+
+        .back-btn {
+          padding: 8px 16px;
+          background: var(--bg-tertiary);
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          color: var(--text-secondary);
+          font-size: 14px;
+          transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+          background: var(--border-color);
+          color: var(--text-primary);
+        }
+
+        /* Responsywność */
+        @media (max-width: 768px) {
+          .stats-container {
+            padding: 15px;
+          }
+          
+          .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+          
+          .students-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .nav-tabs {
+            flex-direction: column;
+          }
+          
+          .student-stats {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+          color: var(--text-primary);
+          margin-bottom: 20px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid var(--bg-tertiary);
         }
 
         .top-students {
-          background: white;
+          background: var(--card-bg);
           border-radius: 12px;
           box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           overflow: hidden;
@@ -729,7 +939,7 @@ class TeacherStatistics extends HTMLElement {
           display: flex;
           align-items: center;
           padding: 15px 20px;
-          border-bottom: 1px solid #f0f0f0;
+          border-bottom: 1px solid var(--bg-tertiary);
         }
 
         .student-row:last-child {
@@ -737,14 +947,14 @@ class TeacherStatistics extends HTMLElement {
         }
 
         .student-row.top-performer {
-          background: linear-gradient(90deg, #fff8e1, white);
+          background: var(--card-bg);
         }
 
         .student-rank {
           width: 40px;
           height: 40px;
           border-radius: 50%;
-          background: #f5f5f5;
+          background: var(--bg-tertiary);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -763,12 +973,12 @@ class TeacherStatistics extends HTMLElement {
 
         .student-info h4 {
           margin: 0 0 5px 0;
-          color: #333;
+          color: var(--text-primary);
         }
 
         .student-info p {
           margin: 0;
-          color: #666;
+          color: var(--text-secondary);
           font-size: 14px;
         }
 
@@ -786,7 +996,7 @@ class TeacherStatistics extends HTMLElement {
           display: flex;
           gap: 15px;
           padding: 15px;
-          background: white;
+          background: var(--card-bg);
           border-radius: 8px;
           box-shadow: 0 2px 5px rgba(0,0,0,0.1);
           margin-bottom: 10px;
@@ -804,11 +1014,11 @@ class TeacherStatistics extends HTMLElement {
         }
 
         .activity-icon.correct {
-          background: #e8f5e8;
+          background: var(--success-bg);
         }
 
         .activity-icon.incorrect {
-          background: #ffeaea;
+          background: var(--error-bg);
         }
 
         .activity-content {
@@ -817,7 +1027,7 @@ class TeacherStatistics extends HTMLElement {
 
         .activity-student {
           font-weight: 500;
-          color: #333;
+          color: var(--text-primary);
           margin-bottom: 5px;
         }
 
@@ -825,23 +1035,23 @@ class TeacherStatistics extends HTMLElement {
           display: flex;
           gap: 15px;
           font-size: 12px;
-          color: #666;
+          color: var(--text-secondary);
         }
 
         .activity-meta span {
-          background: #f5f5f5;
+          background: var(--bg-tertiary);
           padding: 2px 6px;
           border-radius: 4px;
         }
 
         .activity-question {
           font-weight: 500;
-          color: #333;
+          color: var(--text-primary);
           margin-bottom: 5px;
         }
 
         .activity-module {
-          background: #e3f2fd !important;
+          background: var(--info-bg) !important;
           color: #1976d2 !important;
         }
 
@@ -850,17 +1060,17 @@ class TeacherStatistics extends HTMLElement {
         }
 
         .quiz-type {
-          background: #fff3e0 !important;
+          background: var(--warning-bg) !important;
           color: #f57c00 !important;
         }
 
         .exercise-type {
-          background: #e8f5e8 !important;
+          background: var(--success-bg) !important;
           color: #2e7d32 !important;
         }
 
         .students-table {
-          background: white;
+          background: var(--card-bg);
           border-radius: 12px;
           box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           overflow: hidden;
@@ -871,10 +1081,10 @@ class TeacherStatistics extends HTMLElement {
           grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr 1fr;
           gap: 20px;
           padding: 15px 20px;
-          background: #f8f9fa;
+          background: var(--bg-tertiary);
           font-weight: 500;
-          color: #333;
-          border-bottom: 1px solid #e0e0e0;
+          color: var(--text-primary);
+          border-bottom: 1px solid var(--border-color);
         }
 
         .table-row {
@@ -882,7 +1092,7 @@ class TeacherStatistics extends HTMLElement {
           grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr 1fr;
           gap: 20px;
           padding: 15px 20px;
-          border-bottom: 1px solid #f0f0f0;
+          border-bottom: 1px solid var(--bg-tertiary);
           align-items: center;
         }
 
@@ -930,17 +1140,17 @@ class TeacherStatistics extends HTMLElement {
 
         .student-details-header h3 {
           margin: 10px 0 0 0;
-          color: #333;
+          color: var(--text-primary);
         }
 
         .student-cell h4 {
           margin: 0 0 5px 0;
-          color: #333;
+          color: var(--text-primary);
         }
 
         .student-cell p {
           margin: 0;
-          color: #666;
+          color: var(--text-secondary);
           font-size: 12px;
         }
 
@@ -951,12 +1161,12 @@ class TeacherStatistics extends HTMLElement {
         .stat-number {
           display: block;
           font-weight: 500;
-          color: #333;
+          color: var(--text-primary);
         }
 
         .stat-label {
           font-size: 12px;
-          color: #666;
+          color: var(--text-secondary);
         }
 
         .accuracy-badge {
@@ -966,13 +1176,13 @@ class TeacherStatistics extends HTMLElement {
           font-weight: bold;
         }
 
-        .accuracy-badge.high { background: #e8f5e8; color: #2e7d32; }
-        .accuracy-badge.medium { background: #fff3e0; color: #f57c00; }
-        .accuracy-badge.low { background: #ffeaea; color: #d32f2f; }
+        .accuracy-badge.high { background: var(--success-bg); color: #2e7d32; }
+        .accuracy-badge.medium { background: var(--warning-bg); color: #f57c00; }
+        .accuracy-badge.low { background: var(--error-bg); color: #d32f2f; }
 
         .date-text {
           font-size: 12px;
-          color: #666;
+          color: var(--text-secondary);
         }
 
         .modules-performance {
@@ -982,7 +1192,7 @@ class TeacherStatistics extends HTMLElement {
         }
 
         .module-performance-card {
-          background: white;
+          background: var(--card-bg);
           border-radius: 12px;
           padding: 20px;
           box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -997,19 +1207,19 @@ class TeacherStatistics extends HTMLElement {
 
         .module-header h4 {
           margin: 0;
-          color: #333;
+          color: var(--text-primary);
         }
 
         .completion-rate {
-          background: #f0f0f0;
+          background: var(--bg-tertiary);
           padding: 4px 8px;
           border-radius: 12px;
           font-size: 12px;
-          color: #666;
+          color: var(--text-secondary);
         }
 
         .module-category {
-          color: #666;
+          color: var(--text-secondary);
           font-size: 14px;
           margin: 0 0 20px 0;
         }
@@ -1028,14 +1238,14 @@ class TeacherStatistics extends HTMLElement {
         .performance-label {
           display: block;
           font-size: 12px;
-          color: #666;
+          color: var(--text-secondary);
           margin-bottom: 5px;
         }
 
         .performance-value {
           display: block;
           font-weight: 500;
-          color: #333;
+          color: var(--text-primary);
         }
 
         .performance-value.high { color: #2e7d32; }
@@ -1044,7 +1254,7 @@ class TeacherStatistics extends HTMLElement {
 
         .completion-bar {
           height: 8px;
-          background: #e0e0e0;
+          background: var(--border-color);
           border-radius: 4px;
           overflow: hidden;
         }

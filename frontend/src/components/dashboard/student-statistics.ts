@@ -1,4 +1,4 @@
-interface StatisticData {
+﻿interface StatisticData {
   totalExercises: number;
   correctAnswers: number;
   averageTime: number;
@@ -349,8 +349,8 @@ class StudentStatistics extends HTMLElement {
     this.shadow.innerHTML = `
       ${this.getStyles()}
       <div class="stats-container">
-        <div class="stats-header">
-          <h2>📊 Moje Statystyki</h2>
+        <div class="section-header">
+          <h2>📊 Statystyki Studenta</h2>
           <p>Przegląd Twojego postępu w nauce języka angielskiego</p>
         </div>
 
@@ -485,25 +485,34 @@ class StudentStatistics extends HTMLElement {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
-        .stats-header {
-          text-align: center;
+        .section-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 15px;
           margin-bottom: 30px;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease forwards;
+          flex-wrap: wrap;
         }
 
-        .stats-header h2 {
-          color: #333;
-          margin-bottom: 10px;
-        }
-
-        .stats-header p {
-          color: #666;
+        .section-header h2 {
+          color: var(--text-primary);
           margin: 0;
+          font-size: 28px;
+          font-weight: 600;
+        }
+
+        .section-header p {
+          color: var(--text-secondary);
+          margin: 0;
+          font-size: 16px;
         }
 
         .loading, .no-data {
           text-align: center;
           padding: 60px 20px;
-          color: #666;
+          color: var(--text-secondary);
         }
 
         .stats-grid {
@@ -514,7 +523,7 @@ class StudentStatistics extends HTMLElement {
         }
 
         .stat-card {
-          background: white;
+          background: var(--card-bg);
           border-radius: 12px;
           padding: 20px;
           display: flex;
@@ -537,18 +546,18 @@ class StudentStatistics extends HTMLElement {
           align-items: center;
           justify-content: center;
           border-radius: 50%;
-          background: #f5f5f5;
+          background: var(--bg-tertiary);
         }
 
         .stat-content h3 {
           margin: 0;
           font-size: 24px;
-          color: #333;
+          color: var(--text-primary);
         }
 
         .stat-content p {
           margin: 5px 0 0 0;
-          color: #666;
+          color: var(--text-secondary);
           font-size: 14px;
         }
 
@@ -557,7 +566,7 @@ class StudentStatistics extends HTMLElement {
         }
 
         .section h3 {
-          color: #333;
+          color: var(--text-primary);
           margin-bottom: 20px;
           padding-bottom: 10px;
           border-bottom: 2px solid #f0f0f0;
@@ -570,7 +579,7 @@ class StudentStatistics extends HTMLElement {
         }
 
         .module-card {
-          background: white;
+          background: var(--card-bg);
           border-radius: 12px;
           padding: 20px;
           box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -585,7 +594,7 @@ class StudentStatistics extends HTMLElement {
 
         .module-header h4 {
           margin: 0;
-          color: #333;
+          color: var(--text-primary);
         }
 
         .accuracy {
@@ -595,12 +604,12 @@ class StudentStatistics extends HTMLElement {
           font-weight: bold;
         }
 
-        .accuracy.high { background: #e8f5e8; color: #2e7d32; }
-        .accuracy.medium { background: #fff3e0; color: #f57c00; }
-        .accuracy.low { background: #ffeaea; color: #d32f2f; }
+        .accuracy.high { background: var(--success-bg); color: #2e7d32; }
+        .accuracy.medium { background: var(--warning-bg); color: #f57c00; }
+        .accuracy.low { background: var(--error-bg); color: #d32f2f; }
 
         .module-category {
-          color: #666;
+          color: var(--text-secondary);
           font-size: 14px;
           margin: 0 0 15px 0;
         }
@@ -615,7 +624,7 @@ class StudentStatistics extends HTMLElement {
         .progress-bar {
           flex: 1;
           height: 8px;
-          background: #e0e0e0;
+          background: var(--border-color);
           border-radius: 4px;
           overflow: hidden;
         }
@@ -627,7 +636,7 @@ class StudentStatistics extends HTMLElement {
         }
 
         .module-stats {
-          color: #666;
+          color: var(--text-secondary);
           font-size: 14px;
         }
 
@@ -639,7 +648,7 @@ class StudentStatistics extends HTMLElement {
 
         .strengths h4, .weaknesses h4 {
           margin: 0 0 15px 0;
-          color: #333;
+          color: var(--text-primary);
         }
 
         .tag {
@@ -651,17 +660,17 @@ class StudentStatistics extends HTMLElement {
         }
 
         .tag.positive {
-          background: #e8f5e8;
+          background: var(--success-bg);
           color: #2e7d32;
         }
 
         .tag.negative {
-          background: #ffeaea;
+          background: var(--error-bg);
           color: #d32f2f;
         }
 
         .no-data-small {
-          color: #999;
+          color: var(--text-muted);
           font-size: 14px;
           margin: 0;
         }
@@ -674,7 +683,7 @@ class StudentStatistics extends HTMLElement {
           display: flex;
           gap: 15px;
           padding: 15px;
-          background: white;
+          background: var(--card-bg);
           border-radius: 8px;
           box-shadow: 0 2px 5px rgba(0,0,0,0.1);
           margin-bottom: 10px;
@@ -692,11 +701,11 @@ class StudentStatistics extends HTMLElement {
         }
 
         .activity-icon.correct {
-          background: #e8f5e8;
+          background: var(--success-bg);
         }
 
         .activity-icon.incorrect {
-          background: #ffeaea;
+          background: var(--error-bg);
         }
 
         .activity-content {
@@ -705,7 +714,7 @@ class StudentStatistics extends HTMLElement {
 
         .activity-question {
           font-weight: 500;
-          color: #333;
+          color: var(--text-primary);
           margin-bottom: 5px;
         }
 
@@ -713,11 +722,11 @@ class StudentStatistics extends HTMLElement {
           display: flex;
           gap: 15px;
           font-size: 12px;
-          color: #666;
+          color: var(--text-secondary);
         }
 
         .activity-meta span {
-          background: #f5f5f5;
+          background: var(--bg-tertiary);
           padding: 2px 6px;
           border-radius: 4px;
         }
@@ -733,7 +742,7 @@ class StudentStatistics extends HTMLElement {
 
         .user-answer {
           margin-bottom: 4px;
-          color: #333;
+          color: var(--text-primary);
         }
 
         .correct-answer {
@@ -742,7 +751,7 @@ class StudentStatistics extends HTMLElement {
 
         .no-data-small {
           text-align: center;
-          color: #999;
+          color: var(--text-muted);
           font-style: italic;
           padding: 20px;
         }
@@ -768,6 +777,29 @@ class StudentStatistics extends HTMLElement {
           .activity-meta {
             flex-direction: column;
             gap: 5px;
+          }
+        }
+
+        /* Animacje */
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
           }
         }
       </style>

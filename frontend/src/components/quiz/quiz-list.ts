@@ -1,4 +1,4 @@
-import "./quiz-viewer.ts";
+import "./quiz-viewer";
 class QuizList extends HTMLElement {
   shadow: ShadowRoot;
   quizzes: any[] = [];
@@ -87,13 +87,111 @@ class QuizList extends HTMLElement {
       (q) => !this.solvedIds.includes(String(q.id))
     );
     if (unsolved.length === 0) {
-      this.shadow.innerHTML = `<div>Brak nierozwiązanych quizów!</div>`;
+      this.shadow.innerHTML = `
+        <style>
+          .no-quizzes {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px 32px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #ff9800;
+            animation: fadeInUp 0.6s ease forwards;
+          }
+          
+          .no-quizzes-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+          }
+          
+          .no-quizzes h3 {
+            color: var(--text-primary);
+            margin: 0 0 8px 0;
+            font-size: 20px;
+            font-weight: 600;
+          }
+          
+          .no-quizzes p {
+            color: #666;
+            margin: 0;
+            line-height: 1.6;
+          }
+          
+          @keyframes fadeInUp {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        </style>
+        <div class="no-quizzes">
+          <div class="no-quizzes-icon">🎉</div>
+          <h3>Gratulacje!</h3>
+          <p>Ukończyłeś wszystkie dostępne quizy od nauczyciela. Świetna robota!</p>
+        </div>
+      `;
       return;
     }
     this.shadow.innerHTML = `
       <style>
-        .quiz-list { display: flex; flex-direction: column; gap: 16px; }
+        .quiz-list { 
+          display: flex; 
+          flex-direction: column; 
+          gap: 20px;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        .quiz-list-header {
+          text-align: center;
+          margin-bottom: 20px;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease 0.2s forwards;
+        }
+        
+        .quiz-list-header h3 {
+          color: var(--text-primary);
+          font-size: 20px;
+          font-weight: 600;
+          margin: 0 0 8px 0;
+        }
+        
+        .quiz-list-header p {
+          color: #666;
+          margin: 0;
+          font-size: 14px;
+        }
+        
+        .quiz-count {
+          background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+          color: white;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 600;
+          display: inline-block;
+          margin-left: 8px;
+        }
+        
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
       </style>
+      <div class="quiz-list-header">
+        <h3>👩‍🏫 Quizy od Nauczyciela<span class="quiz-count">${unsolved.length}</span></h3>
+        <p>Rozwiąż quizy przygotowane specjalnie przez Twojego nauczyciela</p>
+      </div>
       <div class="quiz-list">
         ${unsolved
           .map((q) => {

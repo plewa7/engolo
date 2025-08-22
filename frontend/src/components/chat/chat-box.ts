@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit';
+﻿import { LitElement, html, css } from 'lit';
 
 interface ChatUser {
   id: number;
@@ -8,33 +8,66 @@ interface ChatUser {
 
 const styles = css`
   .chat-box { 
-    border: 1px solid #e1e5e9; 
+    border: 1px solid var(--border-color); 
     border-radius: 12px; 
     padding: 16px; 
     max-width: 600px; 
     margin: 0 auto;
-    background: #fff; 
+    background: var(--card-bg); 
     display: flex; 
     flex-direction: column; 
     height: 500px; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
             this.fetchMessages(); // Pobierz nowe wiadomości
-          }} style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; width: 100%;">0,0,0.1);
+          }} style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; width: 100%;">0,0,0.1);
   }
 
   .chat-box label {
     font-weight: 600;
     margin-bottom: 12px;
-    color: #374151;
+    color: var(--text-primary);
   }
 
   .chat-box select {
     padding: 8px 12px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     margin-left: 8px;
-    background: #fff;
+    background: var(--card-bg);
+    color: var(--text-primary);
+  }
+
+  .chat-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .chat-controls select {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .chat-controls button {
+    padding: 8px 16px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .chat-controls button:hover {
+    background: var(--primary-dark);
   }
 
   .chat-messages { 
@@ -42,13 +75,13 @@ const styles = css`
     overflow-y: auto; 
     margin: 16px 0; 
     padding: 8px;
-    background: #f9fafb;
+    background: var(--bg-tertiary);
     border-radius: 8px;
   }
 
   .my-message { 
     text-align: right; 
-    background: #3b82f6; 
+    background: var(--primary); 
     color: white;
     margin: 8px 0; 
     padding: 8px 12px; 
@@ -60,8 +93,8 @@ const styles = css`
 
   .other-message { 
     text-align: left; 
-    background: #f3f4f6; 
-    color: #374151;
+    background: var(--card-bg); 
+    color: var(--text-primary);
     margin: 8px 0; 
     padding: 8px 12px; 
     border-radius: 18px 18px 18px 4px;
@@ -79,7 +112,7 @@ const styles = css`
   }
 
   .other-message .chat-date {
-    color: #6b7280;
+    color: var(--text-muted);
   }
 
   .chat-form { 
@@ -92,13 +125,15 @@ const styles = css`
     flex: 1; 
     padding: 12px 16px; 
     border-radius: 24px; 
-    border: 1px solid #d1d5db; 
+    border: 1px solid var(--border-color); 
     outline: none;
     font-size: 14px;
+    background: var(--card-bg);
+    color: var(--text-primary);
   }
 
   .chat-form input:focus {
-    border-color: #3b82f6;
+    border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
@@ -106,7 +141,7 @@ const styles = css`
     padding: 12px 20px; 
     border-radius: 24px; 
     border: none; 
-    background: #3b82f6; 
+    background: var(--primary); 
     color: #fff; 
     cursor: pointer; 
     font-weight: 600;
@@ -114,11 +149,11 @@ const styles = css`
   }
 
   .chat-form button:hover:not(:disabled) {
-    background: #2563eb;
+    background: var(--primary-dark);
   }
 
   .chat-form button:disabled { 
-    background: #9ca3af; 
+    background: var(--text-muted); 
     cursor: not-allowed; 
   }
 `;
@@ -377,14 +412,14 @@ class ChatBox extends LitElement {
       <div class="chat-box">
         ${this.showGroupCreation ? html`
           <!-- Tworzenie nowej grupy -->
-          <div style="border: 2px solid #3b82f6; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-            <h3 style="margin: 0 0 12px 0; color: #3b82f6;">Utwórz nową grupę</h3>
+          <div style="border: 2px solid var(--primary); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <h3 style="margin: 0 0 12px 0; color: var(--primary);">Utwórz nową grupę</h3>
             <input 
               type="text" 
               placeholder="Nazwa grupy..."
               .value=${this.newGroupName}
               @input=${(e: Event) => this.newGroupName = (e.target as HTMLInputElement).value}
-              style="width: 100%; padding: 8px; margin-bottom: 12px; border: 1px solid #d1d5db; border-radius: 4px;"
+              style="width: 100%; padding: 8px; margin-bottom: 12px; border: 1px solid var(--border-color); border-radius: 4px;"
             />
             <div style="margin-bottom: 12px;">
               <label style="font-weight: 600; display: block; margin-bottom: 8px;">Wybierz członków:</label>
@@ -404,7 +439,7 @@ class ChatBox extends LitElement {
               <button 
                 type="button" 
                 @click=${this.createGroup}
-                style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;"
+                style="padding: 8px 16px; background: var(--button-primary-bg); color: var(--button-primary-text); border: none; border-radius: 4px; cursor: pointer;"
                 ?disabled=${!this.newGroupName.trim() || this.selectedUsers.length === 0}
               >
                 Utwórz grupę
@@ -412,7 +447,7 @@ class ChatBox extends LitElement {
               <button 
                 type="button" 
                 @click=${() => { this.showGroupCreation = false; this.selectedUsers = []; this.newGroupName = ''; }}
-                style="padding: 8px 16px; background: #6b7280; color: white; border: none; border-radius: 4px; cursor: pointer;"
+                style="padding: 8px 16px; background: var(--button-secondary-bg); color: var(--button-secondary-text); border: none; border-radius: 4px; cursor: pointer;"
               >
                 Anuluj
               </button>
@@ -421,15 +456,15 @@ class ChatBox extends LitElement {
         ` : ''}
 
         <!-- Wybór odbiorcy/grupy -->
-        <div style="margin-bottom: 16px;">
-          <label style="font-weight: 600; display: block; margin-bottom: 8px;">Rozmowa z:</label>
+        <div class="chat-controls">
+          <label style="font-weight: 600; display: block; margin-bottom: 8px; color: var(--text-primary);">Rozmowa z:</label>
           <select @change=${(e: Event) => {
             const newTarget = (e.target as HTMLSelectElement).value;
             this.selectedTarget = newTarget;
             this.messages = []; // Wyczyść wiadomości przy zmianie odbiorcy
             this.requestUpdate(); // Natychmiastowo odśwież widok
             this.fetchMessages(); // Pobierz nowe wiadomości
-          }} style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; width: 100%;">
+          }}>
             <option value="">-- Wybierz --</option>
             
             <!-- Prywatne rozmowy -->
@@ -459,7 +494,6 @@ class ChatBox extends LitElement {
           <button 
             type="button" 
             @click=${() => this.showGroupCreation = true}
-            style="margin-top: 8px; padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%;"
           >
             + Utwórz nową grupę
           </button>
@@ -468,7 +502,7 @@ class ChatBox extends LitElement {
         <!-- Wiadomości -->
         <div class="chat-messages">
           ${this.messages.length === 0 ? html`
-            <div style="text-align: center; color: #6b7280; font-style: italic; padding: 20px;">
+            <div style="text-align: center; color: var(--text-muted); font-style: italic; padding: 20px;">
               ${this.selectedTarget ? 'Brak wiadomości. Rozpocznij konwersację!' : 'Wybierz odbiorcę aby zobaczyć wiadomości'}
             </div>
           ` : ''}

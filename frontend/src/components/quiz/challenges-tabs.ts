@@ -23,7 +23,7 @@ class ChallengesTabs extends HTMLElement {
     this.shadow.innerHTML = `
       <style>
         .challenges-container {
-          max-width: 800px;
+          max-width: 1000px;
           margin: 0 auto;
           padding: 20px;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -32,56 +32,84 @@ class ChallengesTabs extends HTMLElement {
         .challenges-header {
           text-align: center;
           margin-bottom: 30px;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease forwards;
         }
 
         .challenges-header h2 {
-          color: #333;
+          color: var(--text-primary);
           margin-bottom: 10px;
+          font-size: 28px;
+          font-weight: 600;
         }
 
         .challenges-header p {
           color: #666;
           margin: 0;
+          font-size: 16px;
         }
 
         .tabs {
           display: flex;
-          border-bottom: 2px solid #e0e0e0;
+          background: var(--card-bg);
+          border-radius: 12px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           margin-bottom: 30px;
-          gap: 0;
+          overflow: hidden;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease 0.2s forwards;
         }
 
         .tab-button {
           flex: 1;
-          padding: 15px 20px;
+          padding: 18px 24px;
           border: none;
           background: transparent;
           cursor: pointer;
           font-size: 16px;
-          font-weight: 500;
+          font-weight: 600;
           color: #666;
-          border-bottom: 3px solid transparent;
-          transition: all 0.2s ease;
+          transition: all 0.3s ease;
           position: relative;
+          overflow: hidden;
+        }
+
+        .tab-button::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+          transition: left 0.6s ease;
+        }
+
+        .tab-button:hover::before {
+          left: 100%;
         }
 
         .tab-button:hover {
           background: #f8f9fa;
-          color: #333;
+          color: var(--text-primary);
+          transform: translateY(-2px);
         }
 
         .tab-button.active {
           color: #2196F3;
-          border-bottom-color: #2196F3;
-          background: #f8f9ff;
+          background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
+          border-bottom: 3px solid #2196F3;
         }
 
         .tab-content {
           min-height: 400px;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease 0.4s forwards;
         }
 
         .tab-pane {
           display: none;
+          animation: slideIn 0.3s ease;
         }
 
         .tab-pane.active {
@@ -89,41 +117,62 @@ class ChallengesTabs extends HTMLElement {
         }
 
         .tab-description {
-          background: #f8f9fa;
-          padding: 15px;
-          border-radius: 8px;
-          margin-bottom: 20px;
+          background: var(--card-bg);
+          padding: 20px;
+          border-radius: 12px;
+          margin-bottom: 25px;
           border-left: 4px solid #2196F3;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          opacity: 0;
+          animation: fadeInLeft 0.6s ease forwards;
         }
 
         .tab-description h3 {
-          margin: 0 0 8px 0;
-          color: #333;
+          margin: 0 0 10px 0;
+          color: var(--text-primary);
           font-size: 18px;
+          font-weight: 600;
         }
 
         .tab-description p {
           margin: 0;
           color: #666;
-          line-height: 1.4;
+          line-height: 1.6;
+          font-size: 14px;
         }
 
-        /* Ikony dla zakładek */
-        .tab-button::before {
-          content: "";
-          display: inline-block;
-          width: 20px;
-          height: 20px;
-          margin-right: 8px;
-          vertical-align: middle;
+        /* Animacje */
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
-        .tab-button[data-tab="teacher-quizzes"]::before {
-          content: "👨‍🏫";
+        @keyframes fadeInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
         }
 
-        .tab-button[data-tab="language-exercises"]::before {
-          content: "🎯";
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         /* Responsywność */
@@ -137,9 +186,8 @@ class ChallengesTabs extends HTMLElement {
             font-size: 14px;
           }
           
-          .tab-button::before {
-            width: 16px;
-            height: 16px;
+          .challenges-header h2 {
+            font-size: 24px;
           }
         }
       </style>

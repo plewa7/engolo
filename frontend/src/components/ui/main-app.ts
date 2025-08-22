@@ -3,6 +3,9 @@ export class MainApp extends HTMLElement {
   private currentSection: string = "dashboard";
 
   async connectedCallback() {
+    // Initialize theme from localStorage
+    this.initializeTheme();
+    
     const { authStore } = await import("../../features/auth/auth.store");
     const { fetchUser } = await import("../../features/auth/fetch-user");
     const jwt = localStorage.getItem("strapi_jwt");
@@ -29,13 +32,23 @@ export class MainApp extends HTMLElement {
     this.render();
   }
 
+  initializeTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }
+
   render() {
     this.innerHTML = `
+      <!-- Navigation -->
       <navbar-component role="${
         this.user.role?.name || "student"
       }" current-section="${this.currentSection}"></navbar-component>
+      
+      <!-- Main content -->
       <div id="spa-content"></div>
     `;
+    
+    // Setup navigation
     const navbar = this.querySelector("navbar-component");
     if (navbar) {
       navbar.addEventListener("navigate", (e: any) => {
@@ -51,7 +64,55 @@ export class MainApp extends HTMLElement {
         });
       });
     }
+
     this.renderSection();
+  }
+
+  addThemeToggleToBody() {
+    // Remove existing theme toggle
+    const existingToggle = document.querySelector('.theme-toggle');
+    if (existingToggle) {
+      existingToggle.remove();
+    }
+    
+    // Create new theme toggle
+    const themeToggle = document.createElement('button');
+    themeToggle.className = 'theme-toggle';
+    themeToggle.setAttribute('aria-label', 'Toggle dark mode');
+    
+    // Set initial icon
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    
+    // Add event listener
+    themeToggle.addEventListener('click', () => {
+      this.toggleTheme();
+    });
+    
+    // Add to body
+    document.body.appendChild(themeToggle);
+  }
+
+  toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    // Update theme toggle icon
+    const themeToggle = document.querySelector('.theme-toggle');
+    if (themeToggle) {
+      themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    }
+  }
+
+  disconnectedCallback() {
+    // Clean up theme toggle when component is removed
+    const themeToggle = document.querySelector('.theme-toggle');
+    if (themeToggle) {
+      themeToggle.remove();
+    }
   }
 
   renderSection() {
