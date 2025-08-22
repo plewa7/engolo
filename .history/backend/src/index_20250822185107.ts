@@ -20,7 +20,7 @@ export default {
     // Automatically set permissions for various models for Student and Teacher roles
     try {
       const roles = ['Public', 'Student', 'Teacher'];
-      const modelsToEnable = ['chat-message', 'user-progress', 'exercise-statistic', 'quiz-statistic', 'quiz', 'quiz-set'];
+      const modelsToEnable = ['chat-message', 'user-progress', 'exercise-statistic', 'quiz-statistic', 'quiz-set'];
       
       for (const roleName of roles) {
         const role = await strapi.query('plugin::users-permissions.role').findOne({

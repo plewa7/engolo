@@ -1,10 +1,26 @@
 // @ts-ignore
 import quizViewerCss from "../../styles/quiz-viewer.css?inline";
+
+interface QuizData {
+  id: string;
+  question: string;
+  correctAnswer: string;
+  options?: string[];
+  type?: 'multiple-choice' | 'text-input';
+  points?: number;
+  timeLimit?: number;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  isDaily?: boolean;
+}
+
 class QuizViewer extends HTMLElement {
   shadow: ShadowRoot;
   quizId: string | null = null;
-  quiz: any = null;
+  quiz: QuizData | null = null;
   startTime: number = 0;
+  timer: number | null = null;
+  timeRemaining: number = 0;
+  isCompetitionMode: boolean = false;
   
   constructor() {
     super();
@@ -12,10 +28,13 @@ class QuizViewer extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["quiz-id", "quiz-attributes"];
+    return ["quiz-id", "quiz-attributes", "competition-mode"];
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (name === "competition-mode") {
+      this.isCompetitionMode = newValue === "true";
+    }
     if (
       (name === "quiz-id" || name === "quiz-attributes") &&
       newValue !== oldValue
@@ -27,7 +46,14 @@ class QuizViewer extends HTMLElement {
 
   connectedCallback() {
     this.quizId = this.getAttribute("quiz-id");
+    this.isCompetitionMode = this.getAttribute("competition-mode") === "true";
     this.loadQuiz();
+  }
+
+  disconnectedCallback() {
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
   }
 
   loadQuiz() {
@@ -70,41 +96,368 @@ class QuizViewer extends HTMLElement {
       this.renderError("Brak danych quizu.");
       return;
     }
-    // Obsługa quizów z atrybutami (Strapi)
-    const question =
-      this.quiz.question ||
-      (this.quiz.attributes && this.quiz.attributes.question) ||
-      "Brak pytania";
-    const optionsArr =
-      this.quiz.options ||
-      (this.quiz.attributes && this.quiz.attributes.options) ||
-      [];
-    const options = (optionsArr || [])
-      .map(
-        (opt: string, idx: number) =>
-          `<label class="option-label"><input type="radio" name="answer" value="${opt}" required /> <span class="option-text">${String.fromCharCode(
-            65 + idx
-          )}. ${opt}</span></label>`
-      )
-      .join("");
-    this.shadow.innerHTML = `<style data-quiz-style>\n${quizViewerCss}\n</style>
-      <div class="quiz">
-        <div class="quiz-title">${question}</div>
+    
+    // Get quiz data (compatible with our QuizData interface)
+    const question = this.quiz.question || "Brak pytania";
+    const optionsArr = this.quiz.options || [];
+    const quizType = this.quiz.type || 'multiple-choice';
+    const points = this.quiz.points || 10;
+    const timeLimit = this.quiz.timeLimit || 30;
+    const difficulty = this.quiz.difficulty || 'medium';
+
+    let answerInput = '';
+    
+    if (quizType === 'multiple-choice' && optionsArr.length > 0) {
+      answerInput = `
+        <div class="answer-options">
+          ${optionsArr.map((opt: string, idx: number) => `
+            <label class="option-label">
+              <input type="radio" name="answer" value="${opt}" required />
+              <span class="option-marker">${String.fromCharCode(65 + idx)}</span>
+              <span class="option-text">${opt}</span>
+            </label>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      answerInput = `
+        <div class="text-answer">
+          <input type="text" name="answer" placeholder="Wpisz swoją odpowiedź..." class="text-input" required />
+        </div>
+      `;
+    }
+
+    const difficultyColor = difficulty === 'easy' ? '#4CAF50' : 
+                           difficulty === 'hard' ? '#f44336' : '#FF9800';
+
+    this.shadow.innerHTML = `
+      <style data-quiz-style>
+        ${quizViewerCss}
+        
+        .quiz-card {
+          background: var(--card-bg);
+          border-radius: 20px;
+          padding: 30px;
+          margin-bottom: 20px;
+          box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+          transition: all 0.3s ease;
+          border-left: 5px solid #2196F3;
+          animation: slideInUp 0.5s ease;
+        }
+
+        .quiz-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+        }
+
+        .quiz-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 25px;
+          flex-wrap: wrap;
+          gap: 15px;
+        }
+
+        .quiz-meta {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .quiz-badge {
+          padding: 6px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 600;
+          color: white;
+        }
+
+        .difficulty-badge {
+          background: ${difficultyColor};
+        }
+
+        .points-badge {
+          background: #2196F3;
+        }
+
+        .time-badge {
+          background: #FF9800;
+        }
+
+        .quiz-question {
+          font-size: 20px;
+          line-height: 1.6;
+          margin-bottom: 25px;
+          color: var(--text-primary);
+          padding: 20px;
+          background: #f8f9fa;
+          border-radius: 12px;
+          border-left: 4px solid #2196F3;
+        }
+
+        .answer-options {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-bottom: 25px;
+        }
+
+        .option-label {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          padding: 15px 20px;
+          border: 2px solid #e0e0e0;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          background: white;
+        }
+
+        .option-label:hover {
+          border-color: #2196F3;
+          background: #f8f9ff;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+        }
+
+        .option-label input[type="radio"] {
+          display: none;
+        }
+
+        .option-marker {
+          width: 30px;
+          height: 30px;
+          border: 2px solid #e0e0e0;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          font-size: 14px;
+          color: #666;
+          transition: all 0.3s ease;
+        }
+
+        .option-label input[type="radio"]:checked + .option-marker {
+          background: #2196F3;
+          border-color: #2196F3;
+          color: white;
+        }
+
+        .option-text {
+          flex: 1;
+          font-size: 16px;
+          color: var(--text-primary);
+        }
+
+        .text-answer {
+          margin-bottom: 25px;
+        }
+
+        .text-input {
+          width: 100%;
+          padding: 15px;
+          border: 2px solid #e0e0e0;
+          border-radius: 12px;
+          font-size: 16px;
+          transition: all 0.3s ease;
+          box-sizing: border-box;
+        }
+
+        .text-input:focus {
+          outline: none;
+          border-color: #2196F3;
+          box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .submit-btn {
+          width: 100%;
+          padding: 15px;
+          background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+          color: white;
+          border: none;
+          border-radius: 12px;
+          font-size: 18px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(33, 150, 243, 0.3);
+        }
+
+        .submit-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .timer {
+          background: #fff3e0;
+          border: 2px solid #ff9800;
+          border-radius: 25px;
+          padding: 8px 16px;
+          font-weight: 600;
+          color: #f57c00;
+          font-size: 14px;
+        }
+
+        .timer.warning {
+          background: #ffebee;
+          border-color: #f44336;
+          color: #c62828;
+          animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+
+        @keyframes slideInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .result-card {
+          text-align: center;
+          padding: 30px;
+          border-radius: 16px;
+          margin-top: 20px;
+          animation: slideInUp 0.5s ease;
+        }
+
+        .result-correct {
+          background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+          color: white;
+        }
+
+        .result-incorrect {
+          background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+          color: white;
+        }
+
+        .result-icon {
+          font-size: 48px;
+          margin-bottom: 15px;
+        }
+
+        .result-text {
+          font-size: 20px;
+          font-weight: 600;
+          margin-bottom: 15px;
+        }
+
+        .correct-answer {
+          font-size: 16px;
+          opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+          .quiz-card {
+            padding: 20px;
+          }
+          
+          .quiz-header {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          
+          .quiz-meta {
+            justify-content: center;
+          }
+        }
+      </style>
+      
+      <div class="quiz-card">
+        <div class="quiz-header">
+          <div class="quiz-meta">
+            <span class="quiz-badge difficulty-badge">${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span>
+            <span class="quiz-badge points-badge">${points} pkt</span>
+            <span class="quiz-badge time-badge">⏱️ ${timeLimit}s</span>
+          </div>
+          <div class="timer" id="timer">${timeLimit}s</div>
+        </div>
+        
+        <div class="quiz-question">${question}</div>
+        
         <form id="quiz-form">
-          <div>${options}</div>
-          <button type="submit">Wyślij odpowiedź</button>
+          ${answerInput}
+          <button type="submit" class="submit-btn">Wyślij odpowiedź</button>
         </form>
+        
         <div id="result"></div>
       </div>
     `;
     
     // Start timer when quiz is rendered
     this.startTime = Date.now();
+    this.startTimer();
     
     const form = this.shadow.querySelector<HTMLFormElement>("#quiz-form");
     if (form) {
       form.onsubmit = this.handleSubmit.bind(this);
     }
+  }
+
+  startTimer() {
+    if (!this.quiz) return;
+    
+    const timeLimit = this.quiz.timeLimit || 30;
+    this.timeRemaining = timeLimit;
+    
+    const timerElement = this.shadow.querySelector('#timer');
+    if (!timerElement) return;
+    
+    this.timer = setInterval(() => {
+      this.timeRemaining--;
+      timerElement.textContent = `${this.timeRemaining}s`;
+      
+      if (this.timeRemaining <= 10) {
+        timerElement.classList.add('warning');
+      }
+      
+      if (this.timeRemaining <= 0) {
+        if (this.timer) clearInterval(this.timer);
+        this.timeUp();
+      }
+    }, 1000);
+  }
+
+  timeUp() {
+    const form = this.shadow.querySelector<HTMLFormElement>("#quiz-form");
+    if (form) {
+      const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Czas minął!";
+      }
+      
+      // Auto-submit with current answer if any
+      const answer = this.getCurrentAnswer();
+      this.submitTimeUp(answer);
+    }
+  }
+
+  getCurrentAnswer(): string {
+    const form = this.shadow.querySelector<HTMLFormElement>("#quiz-form");
+    if (!form) return '';
+    
+    const radioAnswer = (form.elements.namedItem("answer") as RadioNodeList)?.value;
+    if (radioAnswer) return radioAnswer;
+    
+    const textAnswer = (form.querySelector('input[type="text"]') as HTMLInputElement)?.value;
+    return textAnswer || '';
   }
 
   // loadStylesheet już nie jest potrzebne
@@ -113,10 +466,25 @@ class QuizViewer extends HTMLElement {
     this.shadow.innerHTML = `<div style="color:red;">${msg}</div>`;
   }
 
-  async handleSubmit(e: SubmitEvent) {
+  async handleSubmit(e: SubmitEvent, providedAnswer?: string) {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
-    const answer = (form.elements.namedItem("answer") as RadioNodeList)?.value;
+    
+    let answer = providedAnswer;
+    if (!answer) {
+      const radioAnswer = (form.elements.namedItem("answer") as RadioNodeList)?.value;
+      const textAnswer = (form.querySelector('input[type="text"]') as HTMLInputElement)?.value;
+      answer = radioAnswer || textAnswer || '';
+    }
+    
+    await this.processAnswer(answer);
+  }
+
+  async submitTimeUp(answer: string) {
+    await this.processAnswer(answer, true);
+  }
+
+  async processAnswer(answer: string, isTimeUp: boolean = false) {
     const quizId = String(this.getAttribute("quiz-id"));
     const timeSpent = Math.round((Date.now() - this.startTime) / 1000); // seconds
     
@@ -136,14 +504,11 @@ class QuizViewer extends HTMLElement {
     }
 
     // Check if correct
-    const correctAnswer = this.quiz.correctAnswer || 
-                         (this.quiz.attributes && this.quiz.attributes.correctAnswer) || "";
+    const correctAnswer = this.quiz?.correctAnswer || "";
     const isCorrect = answer === correctAnswer;
     
     // Get question text
-    const question = this.quiz.question ||
-                    (this.quiz.attributes && this.quiz.attributes.question) || 
-                    "Unknown question";
+    const question = this.quiz?.question || "Unknown question";
 
     // Save detailed statistics
     await this.saveQuizStatistic({
@@ -169,11 +534,42 @@ class QuizViewer extends HTMLElement {
       localStorage.setItem(solvedKey, JSON.stringify(solvedIds));
     }
 
-    // Show result
-    if (isCorrect) {
-      this.shadow.innerHTML = `<div style="color:green;">✅ Dobra odpowiedź!</div>`;
-    } else {
-      this.shadow.innerHTML = `<div style="color:red;">❌ Niestety, zła odpowiedź. Poprawna odpowiedź to: ${correctAnswer}</div>`;
+    // Show result with enhanced UI
+    this.showResult(isCorrect, timeSpent, isTimeUp, correctAnswer);
+  }
+
+  showResult(isCorrect: boolean, timeSpent: number, isTimeUp: boolean = false, correctAnswer: string) {
+    const resultElement = this.shadow.querySelector('#result');
+    if (!resultElement) return;
+
+    const points = this.quiz?.points || 10;
+    const earnedPoints = isCorrect ? Math.max(1, points - Math.floor(timeSpent / 10)) : 0;
+
+    const resultClass = isCorrect ? 'result-correct' : 'result-incorrect';
+    const icon = isCorrect ? '🎉' : (isTimeUp ? '⏰' : '😔');
+    const title = isCorrect ? 'Brawo!' : (isTimeUp ? 'Czas minął!' : 'Nie tym razem');
+    
+    resultElement.innerHTML = `
+      <div class="result-card ${resultClass}">
+        <div class="result-icon">${icon}</div>
+        <div class="result-text">${title}</div>
+        ${isCorrect ? `
+          <div class="correct-answer">
+            Zdobyłeś ${earnedPoints} punktów w ${timeSpent} sekund!
+          </div>
+        ` : `
+          <div class="correct-answer">
+            Poprawna odpowiedź: <strong>${correctAnswer}</strong>
+            <br>Czas: ${timeSpent} sekund
+          </div>
+        `}
+      </div>
+    `;
+
+    // Hide the form
+    const form = this.shadow.querySelector('#quiz-form');
+    if (form) {
+      (form as HTMLElement).style.display = 'none';
     }
   }
 

@@ -1,6 +1,6 @@
 import "../../styles/globals.css";
 import "./dashboard-home";
-import "../quiz/quiz-set-editor";
+import "../quiz/quiz-editor";
 import '../chat/chat-box';
 import "../ui/dictionary";
 import "./teacher-statistics";
@@ -31,7 +31,7 @@ export class TeacherDashboard extends HTMLElement {
             <p>Twórz zadania i quizy dla swoich uczniów</p>
           </div>
           <div class="section-content">
-            <quiz-set-editor></quiz-set-editor>
+            <quiz-editor></quiz-editor>
           </div>
         </div>
         <style>

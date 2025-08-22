@@ -52,3 +52,45 @@ button[type="submit"]:hover {
   margin-top: 12px;
   font-weight: 500;
 }
+
+/* Completed Quiz Set Styles */
+.completed-notice {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  border: 2px solid #28a745;
+}
+
+.completed-icon {
+  font-size: 4em;
+  margin-bottom: 20px;
+}
+
+.completed-notice h2 {
+  color: #28a745;
+  margin-bottom: 15px;
+  font-size: 1.8em;
+}
+
+.completed-notice p {
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.back-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1em;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background 0.2s;
+}
+
+.back-btn:hover {
+  background: var(--primary-dark);
+}

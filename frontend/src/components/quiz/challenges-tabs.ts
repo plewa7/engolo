@@ -1,10 +1,11 @@
 import "../../styles/globals.css";
 import "./quiz-list";
 import "./language-exercises";
+import "./quiz-competition";
 
 class ChallengesTabs extends HTMLElement {
   shadow: ShadowRoot;
-  activeTab: string = 'teacher-quizzes';
+  activeTab: string = 'language-exercises';
 
   constructor() {
     super();
@@ -53,6 +54,10 @@ class ChallengesTabs extends HTMLElement {
           transition: all 0.3s ease;
           position: relative;
           overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
         }
 
         .tab-button::before {
@@ -82,6 +87,10 @@ class ChallengesTabs extends HTMLElement {
           border-bottom: 3px solid #2196F3;
         }
 
+        .tab-icon {
+          font-size: 20px;
+        }
+
         .tab-content {
           min-height: 400px;
           opacity: 0;
@@ -98,31 +107,27 @@ class ChallengesTabs extends HTMLElement {
         }
 
         .tab-description {
-          background: var(--card-bg);
+          text-align: center;
+          margin-bottom: 30px;
           padding: 20px;
-          border-radius: 12px;
-          margin-bottom: 25px;
-          border-left: 4px solid #2196F3;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          opacity: 0;
-          animation: fadeInLeft 0.6s ease forwards;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 16px;
+          color: white;
+          box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
         }
 
-        .tab-description h3 {
+        .tab-description h2 {
           margin: 0 0 10px 0;
-          color: var(--text-primary);
-          font-size: 18px;
-          font-weight: 600;
+          font-size: 24px;
+          font-weight: 700;
         }
 
         .tab-description p {
           margin: 0;
-          color: #666;
-          line-height: 1.6;
-          font-size: 14px;
+          font-size: 16px;
+          opacity: 0.9;
         }
 
-        /* Animacje */
         @keyframes fadeInUp {
           from {
             opacity: 0;
@@ -134,10 +139,10 @@ class ChallengesTabs extends HTMLElement {
           }
         }
 
-        @keyframes fadeInLeft {
+        @keyframes slideIn {
           from {
             opacity: 0;
-            transform: translateX(-30px);
+            transform: translateX(20px);
           }
           to {
             opacity: 1;
@@ -145,72 +150,86 @@ class ChallengesTabs extends HTMLElement {
           }
         }
 
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        /* Responsywność */
-        @media (max-width: 600px) {
-          .challenges-container {
-            padding: 15px;
-          }
-          
+        @media (max-width: 768px) {
           .tab-button {
-            padding: 12px 15px;
-            font-size: 14px;
+            flex-direction: column;
+            padding: 12px 8px;
+            font-size: 12px;
           }
           
-          .challenges-header h2 {
-            font-size: 24px;
+          .tab-icon {
+            font-size: 18px;
+            margin-bottom: 4px;
           }
         }
       </style>
 
       <div class="challenges-container">
-        <div class="section-header">
-          <h2>🎓 Wyzwania i Zadania</h2>
-          <p>Rozwijaj swoje umiejętności językowe poprzez różnorodne ćwiczenia</p>
-        </div>
-
         <div class="tabs">
-          <button class="tab-button ${this.activeTab === 'teacher-quizzes' ? 'active' : ''}" 
-                  data-tab="teacher-quizzes"
-                  onclick="this.getRootNode().host.setActiveTab('teacher-quizzes')">
-            Quizy od nauczyciela
+          <button 
+            class="tab-button ${this.activeTab === 'language-exercises' ? 'active' : ''}"
+            data-tab="language-exercises"
+          >
+            <span class="tab-icon">🗣️</span>
+            Moduły
           </button>
-          <button class="tab-button ${this.activeTab === 'language-exercises' ? 'active' : ''}" 
-                  data-tab="language-exercises"
-                  onclick="this.getRootNode().host.setActiveTab('language-exercises')">
-            Zadania językowe
+          <button 
+            class="tab-button ${this.activeTab === 'teacher-quizzes' ? 'active' : ''}"
+            data-tab="teacher-quizzes"
+          >
+            <span class="tab-icon">📝</span>
+            Zadania
+          </button>
+          <button 
+            class="tab-button ${this.activeTab === 'daily-challenge' ? 'active' : ''}"
+            data-tab="daily-challenge"
+          >
+            <span class="tab-icon">🏆</span>
+            Ranking
           </button>
         </div>
 
         <div class="tab-content">
-          <div class="tab-pane ${this.activeTab === 'teacher-quizzes' ? 'active' : ''}">
+          <div class="tab-pane ${this.activeTab === 'language-exercises' ? 'active' : ''}" id="language-exercises">
             <div class="tab-description">
-              <h3>📝 Quizy od nauczyciela</h3>
-              <p>Rozwiązuj zadania przygotowane specjalnie dla Ciebie przez nauczyciela. Każdy quiz jest dostosowany do Twojego poziomu i aktualnego programu nauczania.</p>
+              <h2>🗣️ Moduły</h2>
+              <p>Ćwicz słownictwo, gramatykę i wymowę w interaktywnych ćwiczeniach</p>
+            </div>
+            <language-exercises></language-exercises>
+          </div>
+          
+          <div class="tab-pane ${this.activeTab === 'teacher-quizzes' ? 'active' : ''}" id="teacher-quizzes">
+            <div class="tab-description">
+              <h2>📝 Zadania</h2>
+              <p>Rozwiązuj zadania przygotowane specjalnie dla Ciebie przez nauczyciela</p>
             </div>
             <quiz-list></quiz-list>
           </div>
-
-          <div class="tab-pane ${this.activeTab === 'language-exercises' ? 'active' : ''}">
+          
+          <div class="tab-pane ${this.activeTab === 'daily-challenge' ? 'active' : ''}" id="daily-challenge">
             <div class="tab-description">
-              <h3>🎯 Interaktywne zadania językowe</h3>
-              <p>Ćwicz język angielski poprzez różnorodne zadania: tłumaczenia, słownictwo i gramatykę. Zadania są automatycznie generowane i dostosowane do Twojego poziomu.</p>
+              <h2>🏆 Ranking</h2>
+              <p>Zobacz ranking najlepszych uczniów i śledź swoje postępy!</p>
             </div>
-            <language-exercises></language-exercises>
+            <quiz-competition></quiz-competition>
           </div>
         </div>
       </div>
     `;
+
+    this.attachEventListeners();
+  }
+
+  attachEventListeners() {
+    const tabButtons = this.shadow.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const tab = (e.currentTarget as HTMLElement).dataset.tab;
+        if (tab) {
+          this.setActiveTab(tab);
+        }
+      });
+    });
   }
 }
 

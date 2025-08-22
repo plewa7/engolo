@@ -1,5 +1,4 @@
-﻿import "./quiz-viewer";
-import "./quiz-set-viewer";
+﻿import "./quiz-set-viewer";
 class QuizList extends HTMLElement {
   shadow: ShadowRoot;
   quizzes: any[] = [];
@@ -175,19 +174,8 @@ class QuizList extends HTMLElement {
           this.quizzes = localQuizSets;
           this.render();
           return;
-        }
-        
-        // Fallback na stare quizy
-        const QUIZZES_URL = "http://localhost:1337/api/quizzes";
-        res = await fetch(QUIZZES_URL, { headers });
-        
-        if (res.ok) {
-          const data = await res.json();
-          this.quizzes = data.data ? data.data : [];
-          this.render();
-          return;
         } else {
-          console.warn("Both endpoints failed, using demo data");
+          console.warn("Quiz-sets endpoint failed, using demo data");
           // Użyj danych demo + localStorage
           this.quizzes = [...localQuizSets, ...this.getDemoQuizSets()];
           this.render();

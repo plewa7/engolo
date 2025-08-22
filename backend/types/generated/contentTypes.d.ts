@@ -496,11 +496,109 @@ export interface ApiExerciseStatisticExerciseStatistic
   };
 }
 
+export interface ApiQuizSetStatisticQuizSetStatistic
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'quiz_set_statistics';
+  info: {
+    description: 'Statistics for quiz set attempts';
+    displayName: 'Quiz Set Statistic';
+    pluralName: 'quiz-set-statistics';
+    singularName: 'quiz-set-statistic';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    answers: Schema.Attribute.JSON;
+    completed: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    completedAt: Schema.Attribute.DateTime;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::quiz-set-statistic.quiz-set-statistic'
+    > &
+      Schema.Attribute.Private;
+    maxScore: Schema.Attribute.Integer & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    quizSet: Schema.Attribute.Relation<'manyToOne', 'api::quiz-set.quiz-set'> &
+      Schema.Attribute.Required;
+    score: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<0>;
+    startedAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    timeSpent: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<0>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    > &
+      Schema.Attribute.Required;
+  };
+}
+
+export interface ApiQuizSetQuizSet extends Struct.CollectionTypeSchema {
+  collectionName: 'quiz_sets';
+  info: {
+    description: 'A collection of quiz questions grouped together';
+    displayName: 'Quiz Set';
+    pluralName: 'quiz-sets';
+    singularName: 'quiz-set';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    category: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    dailyDate: Schema.Attribute.Date;
+    description: Schema.Attribute.Text;
+    difficulty: Schema.Attribute.Enumeration<['easy', 'medium', 'hard']> &
+      Schema.Attribute.DefaultTo<'medium'>;
+    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    isDaily: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    language: Schema.Attribute.Enumeration<['en', 'pl', 'de', 'fr', 'es']> &
+      Schema.Attribute.DefaultTo<'en'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::quiz-set.quiz-set'
+    > &
+      Schema.Attribute.Private;
+    pointsMultiplier: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<1>;
+    publishedAt: Schema.Attribute.DateTime;
+    questions: Schema.Attribute.JSON & Schema.Attribute.Required;
+    statistics: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::quiz-set-statistic.quiz-set-statistic'
+    >;
+    timeLimit: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<600>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 255;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiQuizStatisticQuizStatistic
   extends Struct.CollectionTypeSchema {
   collectionName: 'quiz_statistics';
   info: {
-    description: 'Detailed statistics for teacher quizzes';
+    description: 'Enhanced quiz statistics with competition support';
     displayName: 'Quiz Statistic';
     pluralName: 'quiz-statistics';
     singularName: 'quiz-statistic';
@@ -509,27 +607,29 @@ export interface ApiQuizStatisticQuizStatistic
     draftAndPublish: true;
   };
   attributes: {
+    answers: Schema.Attribute.JSON;
     attempts: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
     category: Schema.Attribute.String &
       Schema.Attribute.DefaultTo<'Quiz nauczyciela'>;
     completedAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    correctAnswer: Schema.Attribute.String & Schema.Attribute.Required;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     exerciseType: Schema.Attribute.String &
-      Schema.Attribute.DefaultTo<'teacher_quiz'>;
-    isCorrect: Schema.Attribute.Boolean & Schema.Attribute.Required;
+      Schema.Attribute.DefaultTo<'quiz_set'>;
+    isCorrect: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::quiz-statistic.quiz-statistic'
     > &
       Schema.Attribute.Private;
+    percentage: Schema.Attribute.Decimal;
     publishedAt: Schema.Attribute.DateTime;
-    question: Schema.Attribute.Text & Schema.Attribute.Required;
-    quizId: Schema.Attribute.String & Schema.Attribute.Required;
+    quizSetId: Schema.Attribute.String & Schema.Attribute.Required;
+    score: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     timeSpent: Schema.Attribute.Integer & Schema.Attribute.Required;
+    totalPoints: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -537,14 +637,13 @@ export interface ApiQuizStatisticQuizStatistic
       'manyToOne',
       'plugin::users-permissions.user'
     >;
-    userAnswer: Schema.Attribute.String & Schema.Attribute.Required;
   };
 }
 
 export interface ApiQuizQuiz extends Struct.CollectionTypeSchema {
   collectionName: 'quizzes';
   info: {
-    description: '';
+    description: 'Enhanced quiz system with competition features';
     displayName: 'Quiz';
     pluralName: 'quizzes';
     singularName: 'quiz';
@@ -553,16 +652,39 @@ export interface ApiQuizQuiz extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
-    correctAnswer: Schema.Attribute.Text;
+    correctAnswer: Schema.Attribute.Text & Schema.Attribute.Required;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    difficulty: Schema.Attribute.Enumeration<['easy', 'medium', 'hard']> &
+      Schema.Attribute.DefaultTo<'medium'>;
+    isDaily: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::quiz.quiz'> &
       Schema.Attribute.Private;
     options: Schema.Attribute.JSON;
+    points: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 100;
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<10>;
     publishedAt: Schema.Attribute.DateTime;
-    question: Schema.Attribute.Text;
+    question: Schema.Attribute.Text & Schema.Attribute.Required;
+    timeLimit: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 300;
+          min: 10;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<30>;
+    type: Schema.Attribute.Enumeration<['multiple-choice', 'text-input']> &
+      Schema.Attribute.DefaultTo<'multiple-choice'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1153,6 +1275,8 @@ declare module '@strapi/strapi' {
       'api::chat-group.chat-group': ApiChatGroupChatGroup;
       'api::chat.chat-message': ApiChatChatMessage;
       'api::exercise-statistic.exercise-statistic': ApiExerciseStatisticExerciseStatistic;
+      'api::quiz-set-statistic.quiz-set-statistic': ApiQuizSetStatisticQuizSetStatistic;
+      'api::quiz-set.quiz-set': ApiQuizSetQuizSet;
       'api::quiz-statistic.quiz-statistic': ApiQuizStatisticQuizStatistic;
       'api::quiz.quiz': ApiQuizQuiz;
       'api::user-progress.user-progress': ApiUserProgressUserProgress;

@@ -19,7 +19,7 @@ interface QuizSet {
   category: string;
 }
 
-class QuizEditor extends HTMLElement {
+class QuizSetEditor extends HTMLElement {
   shadow: ShadowRoot;
   currentQuizSet: Partial<QuizSet> = {
     title: '',
@@ -848,4 +848,4 @@ class QuizEditor extends HTMLElement {
     }
   }
 }
-customElements.define("quiz-editor", QuizEditor);
+customElements.define("quiz-set-editor", QuizSetEditor);
