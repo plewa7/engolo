@@ -47,7 +47,7 @@ export class NavbarComponent extends HTMLElement {
       this.sections = [
         { key: "challenges", label: "Wyzwania", icon: "🎯" },
         { key: "chat", label: "Czat", icon: "💬" },
-        { key: "stats", label: "Statystyki", icon: "📊" },
+        { key: "stats", label: "Moje statystyki", icon: "📊" },
         { key: "dictionary", label: "Słownik", icon: "📚" },
         { key: "notifications", label: "Powiadomienia", icon: "🔔" },
       ];

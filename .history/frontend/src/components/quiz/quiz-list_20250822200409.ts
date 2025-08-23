@@ -50,14 +50,9 @@ class QuizList extends HTMLElement {
     this._userCheckInterval = setInterval(() => {
       const userIdNow = this.getCurrentUserId();
       if (userIdNow !== this._lastUserId) {
-        console.log("👤 User changed from", this._lastUserId, "to", userIdNow, "- refreshing quizzes (backend only)...");
+        console.log("👤 User changed from", this._lastUserId, "to", userIdNow, "- refreshing quizzes...");
         this._lastUserId = userIdNow;
-        // Po zmianie usera wyczyść solvedIds i pobierz tylko z backendu
-        this.solvedIds = [];
-        this.render();
-        this.refreshSolvedFromBackend().then(() => {
-          this.render();
-        });
+        this.refreshSolved();
         this.fetchQuizzes(); // Odśwież całą listę quizów z backendu
       }
     }, 1000);
@@ -123,7 +118,7 @@ class QuizList extends HTMLElement {
         
         // Strapi v4: user relacja jest w stat.attributes.user.data
         const userStats = data.data.filter((stat: any) => {
-          const user = stat.user || stat.attributes?.user?.data;
+          const user = stat.attributes?.user?.data;
           console.log("🔍 Stat user:", user, "Current:", currentUserId);
           return user && String(user.id) === String(currentUserId);
         });
@@ -131,9 +126,8 @@ class QuizList extends HTMLElement {
         console.log("🔍 User's statistics:", userStats);
 
         const solvedQuizSetIds = userStats
-          .map((stat: any) => stat.quizSetId || stat.attributes?.quizSetId)
-          .filter((id: any) => id != null)
-          .map((id: any) => String(id));
+          .filter((stat: any) => stat.attributes?.quizSetId && stat.attributes.quizSetId !== null)
+          .map((stat: any) => String(stat.attributes.quizSetId));
 
         console.log("📊 Solved quiz-sets from backend:", solvedQuizSetIds);
         
@@ -374,10 +368,7 @@ class QuizList extends HTMLElement {
     console.log("🎨 Starting render with quizzes:", this.quizzes.length);
     console.log("🔍 Current solvedIds:", this.solvedIds);
     console.log("🔍 Quiz IDs:", this.quizzes.map(q => ({ id: q.id, stringId: String(q.id) })));
-    // DEBUG: sprawdź typy i wartości id
-    this.quizzes.forEach(q => {
-      console.log("DEBUG: quiz.id=", q.id, "typeof", typeof q.id, "solvedIds:", this.solvedIds, "solved match:", this.solvedIds.includes(String(q.id)));
-    });
+    
     // Obsługa quizów w formacie Strapi: { id, attributes: { ... } } lub płaskim
     const unsolved = this.quizzes.filter(
       (q) => {

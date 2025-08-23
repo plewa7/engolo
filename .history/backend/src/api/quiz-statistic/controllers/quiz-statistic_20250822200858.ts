@@ -21,23 +21,6 @@ export default factories.createCoreController('api::quiz-statistic.quiz-statisti
       delete ctx.request.body.data.attributes.user;
     }
 
-    // WALIDACJA: nie pozwól na duplikaty (user + quizSetId)
-    const quizSetId = ctx.request.body.data.quizSetId;
-    if (userId && quizSetId) {
-      const existing = await strapi.entityService.findMany('api::quiz-statistic.quiz-statistic', {
-        filters: {
-          user: userId,
-          quizSetId: String(quizSetId)
-        },
-        limit: 1
-      });
-      if (existing && existing.length > 0) {
-        console.log('🚫 Duplicate quiz-statistic found, returning existing:', existing[0]);
-        ctx.status = 200;
-        return { data: existing[0] };
-      }
-    }
-
     console.log('📊 Final data being sent:', ctx.request.body.data);
 
     // Wywołaj standardową funkcję create

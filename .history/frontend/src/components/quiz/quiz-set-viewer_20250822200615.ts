@@ -411,18 +411,6 @@ class QuizSetViewer extends HTMLElement {
       }
 
       if (response.ok) {
-        // Jeśli backend zwraca istniejący wpis (duplikat), natychmiast renderuj ekran ukończony
-        if (response.status === 200 && responseJson && responseJson.data) {
-          console.log("🚫 Duplicate detected, rendering completed screen");
-          this.resultSubmitted = true;
-          this.renderCompleted();
-          // Wyślij event że quiz-set został ukończony
-          this.dispatchEvent(new CustomEvent('quiz-completed', {
-            bubbles: true,
-            detail: { quizSetId: this.quizSet!.id }
-          }));
-          return;
-        }
         console.log("✅ Quiz result saved successfully");
         if (responseJson && responseJson.data) {
           console.log("✅ Saved quiz-statistic:", responseJson.data);

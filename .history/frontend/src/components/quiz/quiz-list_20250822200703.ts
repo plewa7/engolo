@@ -131,9 +131,8 @@ class QuizList extends HTMLElement {
         console.log("🔍 User's statistics:", userStats);
 
         const solvedQuizSetIds = userStats
-          .map((stat: any) => stat.quizSetId || stat.attributes?.quizSetId)
-          .filter((id: any) => id != null)
-          .map((id: any) => String(id));
+          .filter((stat: any) => stat.attributes?.quizSetId && stat.attributes.quizSetId !== null)
+          .map((stat: any) => String(stat.attributes.quizSetId));
 
         console.log("📊 Solved quiz-sets from backend:", solvedQuizSetIds);
         
@@ -374,10 +373,7 @@ class QuizList extends HTMLElement {
     console.log("🎨 Starting render with quizzes:", this.quizzes.length);
     console.log("🔍 Current solvedIds:", this.solvedIds);
     console.log("🔍 Quiz IDs:", this.quizzes.map(q => ({ id: q.id, stringId: String(q.id) })));
-    // DEBUG: sprawdź typy i wartości id
-    this.quizzes.forEach(q => {
-      console.log("DEBUG: quiz.id=", q.id, "typeof", typeof q.id, "solvedIds:", this.solvedIds, "solved match:", this.solvedIds.includes(String(q.id)));
-    });
+    
     // Obsługa quizów w formacie Strapi: { id, attributes: { ... } } lub płaskim
     const unsolved = this.quizzes.filter(
       (q) => {
