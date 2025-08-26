@@ -39,6 +39,9 @@ interface QuizStatistic {
   timeSpent: number;
   completedAt: string;
   category?: string;
+  score?: number;
+  totalPoints?: number;
+  percentage?: number;
 }
 
 class StudentStatistics extends HTMLElement {
@@ -67,6 +70,7 @@ class StudentStatistics extends HTMLElement {
 
       const token = localStorage.getItem("strapi_jwt");
       let statisticsData: any[] = [];
+      let quizSetsData: any[] = [];
 
       // Spróbuj pobrać z backend'u
       if (token) {
@@ -77,7 +81,12 @@ class StudentStatistics extends HTMLElement {
           });
 
           // Pobierz quiz statistics
-          const quizResponse = await fetch(`http://localhost:1337/api/quiz-statistics?filters[user][id][$eq]=${userId}&sort=completedAt:desc`, {
+          const quizResponse = await fetch(`http://localhost:1337/api/quiz-statistics?filters[user][id][$eq]=${userId}&sort=completedAt:desc&populate=user`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+
+          // Pobierz quiz-sets żeby mieć tytuły
+          const quizSetsResponse = await fetch(`http://localhost:1337/api/quiz-sets`, {
             headers: { "Authorization": `Bearer ${token}` }
           });
 
@@ -87,8 +96,6 @@ class StudentStatistics extends HTMLElement {
           if (exerciseResponse.ok) {
             const data = await exerciseResponse.json();
             exerciseData = data.data || [];
-          } else if (exerciseResponse.status === 403) {
-            exerciseData = this.loadStatisticsFromLocalStorage(userId, 'exercise_statistics');
           } else {
             exerciseData = this.loadStatisticsFromLocalStorage(userId, 'exercise_statistics');
           }
@@ -96,10 +103,14 @@ class StudentStatistics extends HTMLElement {
           if (quizResponse.ok) {
             const data = await quizResponse.json();
             quizData = data.data || [];
-          } else if (quizResponse.status === 403) {
-            quizData = this.loadStatisticsFromLocalStorage(userId, 'quiz_statistics');
           } else {
             quizData = this.loadStatisticsFromLocalStorage(userId, 'quiz_statistics');
+          }
+
+          if (quizSetsResponse.ok) {
+            const data = await quizSetsResponse.json();
+            quizSetsData = data.data || [];
+            console.log('Quiz Sets Data:', quizSetsData); // Debug
           }
 
           // Combine both types of statistics
@@ -114,9 +125,11 @@ class StudentStatistics extends HTMLElement {
         const exerciseData = this.loadStatisticsFromLocalStorage(userId, 'exercise_statistics');
         const quizData = this.loadStatisticsFromLocalStorage(userId, 'quiz_statistics');
         statisticsData = [...exerciseData, ...quizData];
-      }      this.processStatistics(statisticsData);
+      }
+
+      // Przekaż dane wraz z quiz-setami do processStatistics
+      this.processStatistics(statisticsData, quizSetsData);
     } catch (error) {
-      console.error('Error loading statistics:', error);
       this.showError("Błąd połączenia");
     } finally {
       this.loading = false;
@@ -134,7 +147,7 @@ class StudentStatistics extends HTMLElement {
     }));
   }
 
-  processStatistics(rawData: any[]) {
+  processStatistics(rawData: any[], quizSetsData: any[] = []) {
     
     if (!rawData || rawData.length === 0) {
       this.statistics = {
@@ -156,8 +169,12 @@ class StudentStatistics extends HTMLElement {
     }).filter(stat => stat && typeof stat === 'object'); // Odfiltruj nieprawidłowe dane
     
     // Rozdziel na ćwiczenia językowe i quizy nauczyciela
-    const exercises = allStats.filter(stat => stat.exerciseType && !stat.quizId);
-    const quizzes = allStats.filter(stat => stat.quizId);
+    const exercises = allStats.filter(stat => stat.exerciseType && !stat.quizSetId);
+    const quizzes = allStats.filter(stat => stat.quizSetId);
+    
+    console.log('All Stats:', allStats); // Debug
+    console.log('Quizzes:', quizzes); // Debug
+    console.log('Quiz Sets Data in processStatistics:', quizSetsData); // Debug
     
     if (allStats.length === 0) {
       this.statistics = {
@@ -214,18 +231,27 @@ class StudentStatistics extends HTMLElement {
     const recentQuizzes = quizzes
       .sort((a, b) => new Date(b.completedAt || 0).getTime() - new Date(a.completedAt || 0).getTime())
       .slice(0, 10)
-      .map(quiz => ({
-        id: quiz.id || 'unknown',
-        quizId: quiz.quizId || 'unknown',
-        question: (quiz.question || '').substring(0, 50) + '...',
-        userAnswer: quiz.userAnswer || '',
-        correctAnswer: quiz.correctAnswer || '',
-        isCorrect: quiz.isCorrect === true,
-        attempts: quiz.attempts || 1,
-        timeSpent: quiz.timeSpent || 0,
-        completedAt: quiz.completedAt || new Date().toISOString(),
-        category: quiz.category || 'Quiz'
-      }));
+      .map(quiz => {
+        // Znajdź tytuł quiz-setu na podstawie ID (konwertuj na number dla porównania)
+        const quizSetId = parseInt(quiz.quizSetId);
+        const quizSet = quizSetsData.find(qs => qs.id === quizSetId);
+        const quizTitle = quizSet?.attributes?.title || quizSet?.title || `Quiz Set (ID: ${quiz.quizSetId})`;
+        
+        console.log(`Quiz ${quiz.quizSetId}: Found quizSet:`, quizSet, 'Title:', quizTitle); // Debug
+        
+        return {
+          id: quiz.id || 'unknown',
+          quizId: quiz.quizSetId || 'unknown',
+          question: `${quizTitle} - ${quiz.score || 0}/${quiz.totalPoints || 0} pkt`,
+          userAnswer: `${quiz.score || 0} punktów`,
+          correctAnswer: `${quiz.totalPoints || 0} punktów (max)`,
+          isCorrect: (quiz.percentage || 0) >= 50,
+          attempts: 1,
+          timeSpent: quiz.timeSpent || 0,
+          completedAt: quiz.completedAt || new Date().toISOString(),
+          category: `${quizTitle} (${Math.round(quiz.percentage || 0)}%)`
+        };
+      });
 
     this.statistics = {
       totalExercises,
@@ -446,7 +472,11 @@ class StudentStatistics extends HTMLElement {
                   </div>
                 </div>
               </div>
-            `).join('') : '<p class="no-data-small">Brak rozwiązanych quizów od nauczyciela</p>'}
+            `).join('') : `
+              <div class="no-data-small">
+                <p>Brak rozwiązanych quizów od nauczyciela</p>
+              </div>
+            `}
           </div>
         </div>
       </div>

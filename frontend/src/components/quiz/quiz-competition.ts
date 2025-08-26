@@ -21,18 +21,17 @@ class QuizCompetition extends HTMLElement {
   }
 
   connectedCallback() {
-    this.render(); // Renderuj najpierw loading state
-    this.loadData(); // Potem załaduj dane
+    this.render();
+    this.loadData();
   }
 
   async loadData() {
     await this.loadLeaderboard();
-    this.render(); // Re-renderuj po załadowaniu danych
+    this.render();
   }
 
   async loadLeaderboard() {
     try {
-      // Pobierz wszystkie quiz-statistics z populate user
       const token = localStorage.getItem("strapi_jwt");
       const response = await fetch('http://localhost:1337/api/quiz-statistics?populate=user', {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
@@ -40,24 +39,19 @@ class QuizCompetition extends HTMLElement {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('🏆 Raw leaderboard data:', data);
         this.processLeaderboardData(data.data || []);
       } else {
-        console.warn('Failed to load leaderboard, using demo data');
         this.loadDemoLeaderboard();
       }
     } catch (error) {
-      console.error('Error loading leaderboard:', error);
       this.loadDemoLeaderboard();
     }
   }
 
   processLeaderboardData(statistics: any[]) {
-    // Grupuj statystyki według użytkowników (tylko te które mają user)
     const userStats = new Map<string, any>();
     
     statistics.forEach(stat => {
-      // Pomiń statistiki bez przypisanego użytkownika
       if (!stat.user || !stat.user.id) {
         return;
       }
@@ -86,9 +80,6 @@ class QuizCompetition extends HTMLElement {
       }
     });
     
-    console.log('🏆 Processed user stats:', userStats);
-    
-    // Konwertuj do array i posortuj
     const leaderboardArray = Array.from(userStats.values())
       .map(user => ({
         id: user.id,
@@ -101,15 +92,10 @@ class QuizCompetition extends HTMLElement {
       }))
       .sort((a, b) => b.totalScore - a.totalScore)
       .map((entry, index) => ({ ...entry, rank: index + 1 }))
-      .slice(0, 10); // Top 10
+      .slice(0, 10);
       
-    console.log('🏆 Leaderboard array before assignment:', leaderboardArray);
-    
     this.leaderboard = leaderboardArray;
-    
-    console.log('🏆 Final leaderboard:', this.leaderboard);
       
-    // Znajdź ranking aktualnego użytkownika
     const currentUser = this.getCurrentUser();
     if (currentUser) {
       const userEntry = this.leaderboard.find(entry => entry.id === String(currentUser.id));
@@ -181,9 +167,6 @@ class QuizCompetition extends HTMLElement {
   }
 
   render() {
-    console.log('🎨 Rendering leaderboard:', this.leaderboard);
-    console.log('🎨 Current user rank:', this.currentUserRank);
-    
     this.shadow.innerHTML = `
       <style>
         .competition-container {

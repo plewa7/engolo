@@ -16,10 +16,7 @@ class QuizList extends HTMLElement {
     this.fetchQuizzes();
     window.addEventListener("storage", this.handleStorage);
     
-    // Listen for quiz completion events
     document.addEventListener('quiz-completed', (e: any) => {
-      console.log("🎉 Quiz completed, refreshing list...");
-      // Dodaj quizSetId do solvedIds w localStorage natychmiast
       const quizSetId = e?.detail?.quizSetId;
       if (quizSetId) {
         const userId = this.getCurrentUserId();
@@ -34,30 +31,25 @@ class QuizList extends HTMLElement {
         this.refreshSolved();
       }
       this.render();
-      // Po 1s odśwież z backendu (async, nie blokuje UI)
       setTimeout(() => {
         this.fetchQuizzes();
       }, 1000);
-      // Zamknij modal jeśli jest otwarty
       const modal = document.querySelector('div[style*="position: fixed"]');
       if (modal) {
         modal.remove();
       }
     });
     
-    // Dla SPA: nasłuchuj na zmianę usera w localStorage (np. po login/logout)
     this._userCheckInterval = setInterval(() => {
       const userIdNow = this.getCurrentUserId();
       if (userIdNow !== this._lastUserId) {
-        console.log("👤 User changed from", this._lastUserId, "to", userIdNow, "- refreshing quizzes (backend only)...");
         this._lastUserId = userIdNow;
-        // Po zmianie usera wyczyść solvedIds i pobierz tylko z backendu
         this.solvedIds = [];
         this.render();
         this.refreshSolvedFromBackend().then(() => {
           this.render();
         });
-        this.fetchQuizzes(); // Odśwież całą listę quizów z backendu
+        this.fetchQuizzes();
       }
     }, 1000);
   }
@@ -77,7 +69,6 @@ class QuizList extends HTMLElement {
   getCurrentUserId() {
     const user = JSON.parse(localStorage.getItem("user") || "null");
     if (user && user.id) return String(user.id);
-    // Spróbuj z JWT
     const jwt = localStorage.getItem("strapi_jwt");
     if (jwt) {
       try {
@@ -101,8 +92,6 @@ class QuizList extends HTMLElement {
       const token = localStorage.getItem("strapi_jwt");
       if (!token) return;
 
-      console.log("🔄 Refreshing solved quiz-sets from backend...");
-      // Najpierw spróbuj bez filtra użytkownika - zobaczmy wszystkie dane
       const API_URL_ALL = "http://localhost:1337/api/quiz-statistics?populate=user";
       
       const response = await fetch(API_URL_ALL, {
@@ -113,36 +102,23 @@ class QuizList extends HTMLElement {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("🔍 Raw quiz-statistics response (ALL):", data);
-        console.log("🔍 First statistic detail:", data.data[0]);
         
-        // Filtruj manualnie na podstawie user ID lub wszystkie jeśli nie ma user
         const currentUserId = this.getCurrentUserId();
-        console.log("🔍 Current user ID:", currentUserId);
         
-        // Strapi v4: user relacja jest w stat.attributes.user.data
         const userStats = data.data.filter((stat: any) => {
           const user = stat.user || stat.attributes?.user?.data;
-          console.log("🔍 Stat user:", user, "Current:", currentUserId);
           return user && String(user.id) === String(currentUserId);
         });
-
-        console.log("🔍 User's statistics:", userStats);
 
         const solvedQuizSetIds = userStats
           .map((stat: any) => stat.quizSetId || stat.attributes?.quizSetId)
           .filter((id: any) => id != null)
           .map((id: any) => String(id));
 
-        console.log("📊 Solved quiz-sets from backend:", solvedQuizSetIds);
-        
-  // Używaj tylko solvedIds z backendu (nie z localStorage)
-  this.solvedIds = [...new Set(solvedQuizSetIds)] as string[];
-  this.saveSolvedIds();
-  console.log("✅ Updated solved IDs (backend only):", this.solvedIds);
+        this.solvedIds = [...new Set(solvedQuizSetIds)] as string[];
+        this.saveSolvedIds();
       }
     } catch (err) {
-      console.warn("⚠️ Error refreshing solved quiz-sets:", err);
     }
   }
 
@@ -153,16 +129,11 @@ class QuizList extends HTMLElement {
   }
 
   async fetchQuizzes() {
-    console.log("🔄 Starting fetchQuizzes...");
     try {
-      // Najpierw zaktualizuj listę rozwiązanych z backendu
       await this.refreshSolvedFromBackend();
 
-      // Sprawdź najpierw localStorage czy są quiz-sets
       const localQuizSets = this.getLocalQuizSets();
-      console.log("💾 Local quiz-sets found:", localQuizSets.length);
 
-      // Spróbuj quiz-sets API
       const QUIZ_SETS_URL = "http://localhost:1337/api/quiz-sets";
       const token = localStorage.getItem("strapi_jwt");
       const headers: Record<string, string> = {};
@@ -170,36 +141,25 @@ class QuizList extends HTMLElement {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      console.log("🌐 Trying quiz-sets API...");
       let res = await fetch(QUIZ_SETS_URL, { headers });
 
       if (res.ok) {
-        console.log("✅ Quiz-sets API worked!");
         const data = await res.json();
-        console.log("🔍 Raw API response:", data);
         const apiQuizSets = data.data ? data.data : [];
-        console.log("📊 API quiz-sets:", apiQuizSets.length);
-        console.log("📊 First quiz-set:", apiQuizSets[0]);
-        // Połącz dane z API i localStorage
         this.quizzes = [...apiQuizSets, ...localQuizSets];
-        console.log("📋 Total quiz-sets:", this.quizzes.length);
         this.render();
         return;
       } else {
-        console.warn("❌ Quiz-sets endpoint failed with status:", res.status);
         if (localQuizSets.length > 0) {
-          console.log("✅ Using localStorage quiz-sets:", localQuizSets.length);
           this.quizzes = localQuizSets;
           this.render();
           return;
         }
-        // Brak quizów
         this.quizzes = [];
         this.render();
         return;
       }
     } catch (err) {
-      console.error("Error fetching quizzes:", err);
       const localQuizSets = this.getLocalQuizSets();
       this.quizzes = localQuizSets;
       this.render();
@@ -211,185 +171,23 @@ class QuizList extends HTMLElement {
       const stored = localStorage.getItem('created_quiz_sets');
       if (stored) {
         const parsed = JSON.parse(stored);
-        console.log("Found stored quiz-sets:", parsed);
         return Array.isArray(parsed) ? parsed : [];
       }
     } catch (e) {
-      console.error("Error parsing localStorage quiz-sets:", e);
     }
     return [];
   }
 
-  getDemoQuizSets() {
-    return [
-      {
-        id: "demo-1",
-        attributes: {
-          title: "Podstawy Angielskiego",
-          description: "Quiz sprawdzający podstawową znajomość angielskiego",
-          questions: [
-            {
-              question: "What is the capital of England?",
-              options: ["London", "Manchester", "Birmingham", "Liverpool"],
-              correctAnswer: "London",
-              type: "multiple-choice",
-              points: 10,
-              difficulty: "easy"
-            },
-            {
-              question: "How do you say 'hello' in English?",
-              options: ["Hi", "Bye", "Thanks", "Sorry"],
-              correctAnswer: "Hi",
-              type: "multiple-choice", 
-              points: 5,
-              difficulty: "easy"
-            },
-            {
-              question: "What does 'cat' mean in Polish?",
-              options: ["pies", "kot", "mysz", "ptak"],
-              correctAnswer: "kot",
-              type: "multiple-choice",
-              points: 8,
-              difficulty: "easy"
-            }
-          ],
-          timeLimit: 180,
-          category: "Angielski",
-          isDaily: false
-        }
-      },
-      {
-        id: "demo-2", 
-        attributes: {
-          title: "Matematyka - Algebra",
-          description: "Podstawowe równania i wzory algebraiczne",
-          questions: [
-            {
-              question: "Rozwiąż równanie: 2x + 5 = 13",
-              options: ["x = 4", "x = 3", "x = 5", "x = 6"],
-              correctAnswer: "x = 4",
-              type: "multiple-choice",
-              points: 15,
-              difficulty: "medium"
-            },
-            {
-              question: "Ile wynosi 3² + 4²?",
-              options: ["25", "20", "24", "16"],
-              correctAnswer: "25", 
-              type: "multiple-choice",
-              points: 10,
-              difficulty: "easy"
-            },
-            {
-              question: "Co to jest pierwiastek z 64?",
-              options: ["6", "7", "8", "9"],
-              correctAnswer: "8",
-              type: "multiple-choice", 
-              points: 12,
-              difficulty: "medium"
-            }
-          ],
-          timeLimit: 240,
-          category: "Matematyka",
-          isDaily: true
-        }
-      },
-      {
-        id: "demo-3",
-        attributes: {
-          title: "Historia Polski",
-          description: "Najważniejsze wydarzenia w historii Polski",
-          questions: [
-            {
-              question: "W którym roku Polska odzyskała niepodległość?",
-              options: ["1916", "1918", "1919", "1920"],
-              correctAnswer: "1918",
-              type: "multiple-choice",
-              points: 10,
-              difficulty: "medium"
-            },
-            {
-              question: "Kto był pierwszym królem Polski?",
-              options: ["Mieszko I", "Bolesław Chrobry", "Kazimierz Wielki", "Władysław Łokietek"],
-              correctAnswer: "Bolesław Chrobry",
-              type: "multiple-choice",
-              points: 15,
-              difficulty: "hard"
-            },
-            {
-              question: "W którym roku była bitwa pod Grunwaldem?",
-              options: ["1400", "1410", "1420", "1430"],
-              correctAnswer: "1410",
-              type: "multiple-choice",
-              points: 12,
-              difficulty: "medium"
-            }
-          ],
-          timeLimit: 300,
-          category: "Historia",
-          isDaily: false
-        }
-      },
-      {
-        id: "demo-4",
-        attributes: {
-          title: "Nauki Przyrodnicze",
-          description: "Podstawowe fakty z biologii, chemii i fizyki",
-          questions: [
-            {
-              question: "Jaki jest symbol chemiczny tlenu?",
-              options: ["O", "Ox", "O2", "OX"],
-              correctAnswer: "O",
-              type: "multiple-choice",
-              points: 8,
-              difficulty: "easy"
-            },
-            {
-              question: "Ile wynosi przyspieszenie ziemskie?",
-              options: ["9.8 m/s²", "10 m/s²", "9.6 m/s²", "8.9 m/s²"],
-              correctAnswer: "9.8 m/s²",
-              type: "multiple-choice",
-              points: 12,
-              difficulty: "medium"
-            },
-            {
-              question: "Który organ w ciele człowieka produkuje insulinę?",
-              options: ["wątroba", "nerki", "trzustka", "śledziona"],
-              correctAnswer: "trzustka",
-              type: "multiple-choice",
-              points: 15,
-              difficulty: "hard"
-            }
-          ],
-          timeLimit: 250,
-          category: "Przyroda",
-          isDaily: false
-        }
-      }
-    ];
-  }
-
   render() {
-    console.log("🎨 Starting render with quizzes:", this.quizzes.length);
-    console.log("🔍 Current solvedIds:", this.solvedIds);
-    console.log("🔍 Quiz IDs:", this.quizzes.map(q => ({ id: q.id, stringId: String(q.id) })));
-    // DEBUG: sprawdź typy i wartości id
-    this.quizzes.forEach(q => {
-      console.log("DEBUG: quiz.id=", q.id, "typeof", typeof q.id, "solvedIds:", this.solvedIds, "solved match:", this.solvedIds.includes(String(q.id)));
-    });
-    // Obsługa quizów w formacie Strapi: { id, attributes: { ... } } lub płaskim
     const unsolved = this.quizzes.filter(
       (q) => {
         const isSolved = this.solvedIds.includes(String(q.id));
-        console.log(`🔍 Quiz ${q.id} (${String(q.id)}) solved: ${isSolved}`);
         return !isSolved;
       }
     );
     
-    // Podziel na dzienne challenge i zwykłe quiz-sety
     const dailyChallenges = unsolved.filter((q) => {
       const attrs = q.attributes || q;
-      console.log("🔍 Checking daily for quiz:", q.id, "isDaily:", attrs.isDaily);
       return attrs.isDaily === true;
     });
     
@@ -397,9 +195,6 @@ class QuizList extends HTMLElement {
       const attrs = q.attributes || q;
       return attrs.isDaily !== true;
     });
-    
-    console.log("📋 Daily challenges:", dailyChallenges.length);
-    console.log("📋 Regular quizzes:", regularQuizzes.length);
     
     if (unsolved.length === 0) {
       this.shadow.innerHTML = `
@@ -646,7 +441,6 @@ class QuizList extends HTMLElement {
       </div>
     `;
 
-    // Attach event listeners
     this.attachEventListeners();
   }
 
@@ -696,17 +490,8 @@ class QuizList extends HTMLElement {
   }
 
   openQuizSet(quiz: any) {
-    console.log("🎯 Opening quiz-set:", quiz);
-    
-    // Obsłuż oba formaty: Strapi { id, attributes: {...} } i płaski {...}
     const quizData = quiz.attributes || quiz;
-    console.log("🎯 Quiz data to pass:", quizData);
     
-    // Nie używaj &quot; - użyj pojedynczych cudzysłowów lub base64
-    const attrsStr = JSON.stringify(quizData).replace(/'/g, "&#39;");
-    console.log("🎯 Attributes string:", attrsStr);
-    
-    // Utwórz modal lub nową stronę dla quiz-set-viewer
     const modal = document.createElement('div');
     modal.style.cssText = `
       position: fixed;
@@ -753,7 +538,6 @@ class QuizList extends HTMLElement {
     const quizViewer = document.createElement('quiz-set-viewer');
     quizViewer.setAttribute('quiz-set-id', quiz.id);
     
-    // Przekaż dane bezpośrednio przez właściwość zamiast atrybut HTML
     (quizViewer as any).quizSetData = quizData;
     
     container.appendChild(closeBtn);
@@ -761,7 +545,6 @@ class QuizList extends HTMLElement {
     modal.appendChild(container);
     document.body.appendChild(modal);
     
-    // Zamknij modal po kliknięciu w tło
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
         modal.remove();
