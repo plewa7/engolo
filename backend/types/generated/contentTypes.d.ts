@@ -1074,7 +1074,7 @@ export interface PluginUsersPermissionsUser
       }>;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
-    quizzes: Schema.Attribute.Relation<'oneToMany', 'api::quiz.quiz'>;
+    quizSets: Schema.Attribute.Relation<'oneToMany', 'api::quiz-set.quiz-set'>;
     resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
     role: Schema.Attribute.Relation<
       'manyToOne',

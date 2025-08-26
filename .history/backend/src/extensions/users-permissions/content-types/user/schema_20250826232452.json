@@ -65,11 +65,11 @@
       "inversedBy": "users",
       "configurable": false
     },
-    "quizSets": {
+    "quizzes": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::quiz-set.quiz-set",
-      "mappedBy": "createdBy"
+      "mappedBy": "user"
     }
   }
 }

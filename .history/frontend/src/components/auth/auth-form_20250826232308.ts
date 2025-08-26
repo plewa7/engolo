@@ -17,8 +17,34 @@ class AuthForm extends HTMLElement {
     this.errorMsg = "";
     this.successMsg = "";
     
-    // Pełne ponowne renderowanie
-    this.render();
+    // Update form content without full re-render
+    const form = this.querySelector('form');
+    if (form) {
+      form.id = mode === 'login' ? 'login-form' : 'register-form';
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.textContent = mode === 'login' ? 'Zaloguj się' : 'Zarejestruj się';
+      }
+    }
+    
+    // Update tab indicator
+    const indicator = this.querySelector('.tab-indicator');
+    if (indicator) {
+      if (mode === 'register') {
+        indicator.classList.add('register');
+      } else {
+        indicator.classList.remove('register');
+      }
+    }
+    
+    // Update disabled states
+    const tabs = this.querySelectorAll('.tab-btn');
+    tabs.forEach((tab, index) => {
+      const isActive = (index === 0 && mode === 'login') || (index === 1 && mode === 'register');
+      (tab as HTMLButtonElement).disabled = isActive;
+    });
+    
+    this.updateDisplay();
   }
 
   setError(msg: string) {

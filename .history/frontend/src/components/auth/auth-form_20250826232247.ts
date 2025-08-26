@@ -17,8 +17,34 @@ class AuthForm extends HTMLElement {
     this.errorMsg = "";
     this.successMsg = "";
     
-    // Pełne ponowne renderowanie
-    this.render();
+    // Update form content without full re-render
+    const form = this.querySelector('form');
+    if (form) {
+      form.id = mode === 'login' ? 'login-form' : 'register-form';
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.textContent = mode === 'login' ? 'Zaloguj się' : 'Zarejestruj się';
+      }
+    }
+    
+    // Update tab indicator
+    const indicator = this.querySelector('.tab-indicator');
+    if (indicator) {
+      if (mode === 'register') {
+        indicator.classList.add('register');
+      } else {
+        indicator.classList.remove('register');
+      }
+    }
+    
+    // Update disabled states
+    const tabs = this.querySelectorAll('.tab-btn');
+    tabs.forEach((tab, index) => {
+      const isActive = (index === 0 && mode === 'login') || (index === 1 && mode === 'register');
+      (tab as HTMLButtonElement).disabled = isActive;
+    });
+    
+    this.updateDisplay();
   }
 
   setError(msg: string) {
@@ -164,88 +190,56 @@ class AuthForm extends HTMLElement {
       `,
       this
     );
-    
-    // Przypisz event listenery po renderowaniu
-    setTimeout(() => {
-      const loginForm = this.querySelector("#login-form");
-      const registerForm = this.querySelector("#register-form");
-      
-      if (loginForm) {
-        loginForm.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          if (this.mode !== "login") return;
-          
-          this.errorMsg = "";
-          this.successMsg = "";
-          this.updateDisplay();
-          
-          const form = e.target as HTMLFormElement;
-          const formData = new FormData(form);
-          
-          login(formData).subscribe({
-            next: (res) => {
-              authStore.update(() => ({ jwt: res.jwt, user: res.user }));
-              window.location.href = "app.html";
-            },
-            error: (err) => {
-              if (this.mode === "login") {
-                let msg = err?.response?.error?.message || "Unknown error";
-                if (msg === "Invalid identifier or password") {
-                  msg = "Nieprawidłowy login lub hasło.";
-                } else if (msg === "Missing required parameter(s)") {
-                  msg = "Proszę wypełnić wszystkie wymagane pola.";
-                }
-                this.setError(`Logowanie nie powiodło się: ${msg}`);
-              }
-            },
-          });
-        });
-      }
-      
-      if (registerForm) {
-        registerForm.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          if (this.mode !== "register") return;
-          
-          const form = e.target as HTMLFormElement;
-          const formData = new FormData(form);
-          
-          // Sprawdź czy hasła się zgadzają
-          const password = formData.get("password") as string;
-          const confirmPassword = formData.get("confirmPassword") as string;
-          
-          if (password !== confirmPassword) {
-            this.setError("Hasła nie są identyczne.");
-            return;
+    this.querySelector("#login-form")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      // Rozróżnienie: czy użytkownik jest na zakładce logowania
+      if (this.mode !== "login") return;
+      this.errorMsg = "";
+      this.successMsg = "";
+      this.updateDisplay();
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
+      login(formData).subscribe({
+        next: (res) => {
+          authStore.update(() => ({ jwt: res.jwt, user: res.user }));
+          window.location.href = "app.html";
+        },
+        error: (err) => {
+          if (this.mode === "login") {
+            let msg = err?.response?.error?.message || "Unknown error";
+            if (msg === "Invalid identifier or password") {
+              msg = "Invalid email or password.";
+            } else if (msg === "Missing required parameter(s)") {
+              msg = "Please fill in all required fields.";
+            }
+            this.setError(`Login failed: ${msg}`);
           }
-          
-          this.errorMsg = "";
-          this.successMsg = "";
-          this.updateDisplay();
-          
-          register(formData).subscribe({
-            next: (_) => {
-              this.errorMsg = "";
-              this.successMsg = "Rejestracja pomyślna! Możesz się teraz zalogować.";
-              this.updateDisplay();
-              // Przełącz na tryb logowania po udanej rejestracji
-              setTimeout(() => {
-                this.switchMode("login");
-              }, 2000);
-            },
-            error: (err) => {
-              let msg = err?.response?.error?.message || "Nieznany błąd";
-              if (msg.includes("Email or Username are already taken")) {
-                msg = "E-mail lub login jest już zajęty.";
-              } else if (msg.includes("password")) {
-                msg = "Hasło jest za słabe.";
-              }
-              this.setError(`Rejestracja nie powiodła się: ${msg}`);
-            },
-          });
+        },
+      });
+    });
+    this.querySelector("#register-form")?.addEventListener(
+      "submit",
+      async (e) => {
+        e.preventDefault();
+        const form = e.target as HTMLFormElement;
+        const formData = new FormData(form);
+        this.errorMsg = "";
+        this.successMsg = "";
+        this.updateDisplay();
+        register(formData).subscribe({
+          next: (_) => {
+            this.errorMsg = "";
+            this.successMsg = "Registration successful! You can now log in.";
+            this.updateDisplay();
+          },
+          error: (err) =>
+            this.setError(
+              "Registration failed: " +
+                (err?.response?.error?.message || "Unknown error")
+            ),
         });
       }
-    }, 0);
+    );
     (window as any).logout = () => {
       localStorage.removeItem("jwt");
       authStore.update(() => ({ jwt: null, user: null }));
