@@ -68,27 +68,6 @@ class QuizViewer extends HTMLElement {
         return;
       }
     }
-    // NIE pobieraj quizu z API jeśli quiz-attributes już jest
-    // if (this.quizId) {
-    //   this.fetchQuiz();
-    // }
-  }
-
-  async fetchQuiz() {
-    if (!this.quizId) return;
-    try {
-      const API_URL = `http://localhost:1337/api/quizzes/${this.quizId}`;
-      const res = await fetch(API_URL);
-      if (res.ok) {
-        const data = await res.json();
-        this.quiz = data.data ? data.data.attributes : data;
-        this.render();
-      } else {
-        this.renderError("Nie znaleziono quizu.");
-      }
-    } catch (err) {
-      this.renderError("Błąd sieci.");
-    }
   }
 
   render() {

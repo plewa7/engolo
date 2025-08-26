@@ -61,12 +61,6 @@
       "type": "relation",
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user"
-    },
-    "statistics": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::quiz-set-statistic.quiz-set-statistic",
-      "mappedBy": "quizSet"
     }
   }
 }

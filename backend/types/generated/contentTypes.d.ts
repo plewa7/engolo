@@ -369,44 +369,6 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiChatGroupChatGroup extends Struct.CollectionTypeSchema {
-  collectionName: 'chat_groups';
-  info: {
-    description: 'Grupa czatu dla wielu u\u017Cytkownik\u00F3w';
-    displayName: 'Chat Group';
-    pluralName: 'chat-groups';
-    singularName: 'chat-group';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    creator: Schema.Attribute.Relation<
-      'oneToOne',
-      'plugin::users-permissions.user'
-    > &
-      Schema.Attribute.Required;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::chat-group.chat-group'
-    > &
-      Schema.Attribute.Private;
-    members: Schema.Attribute.Relation<
-      'manyToMany',
-      'plugin::users-permissions.user'
-    >;
-    name: Schema.Attribute.String & Schema.Attribute.Required;
-    publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
 export interface ApiChatChatMessage extends Struct.CollectionTypeSchema {
   collectionName: 'chat_messages';
   info: {
@@ -496,53 +458,6 @@ export interface ApiExerciseStatisticExerciseStatistic
   };
 }
 
-export interface ApiQuizSetStatisticQuizSetStatistic
-  extends Struct.CollectionTypeSchema {
-  collectionName: 'quiz_set_statistics';
-  info: {
-    description: 'Statistics for quiz set attempts';
-    displayName: 'Quiz Set Statistic';
-    pluralName: 'quiz-set-statistics';
-    singularName: 'quiz-set-statistic';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    answers: Schema.Attribute.JSON;
-    completed: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
-    completedAt: Schema.Attribute.DateTime;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::quiz-set-statistic.quiz-set-statistic'
-    > &
-      Schema.Attribute.Private;
-    maxScore: Schema.Attribute.Integer & Schema.Attribute.Required;
-    publishedAt: Schema.Attribute.DateTime;
-    quizSet: Schema.Attribute.Relation<'manyToOne', 'api::quiz-set.quiz-set'> &
-      Schema.Attribute.Required;
-    score: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<0>;
-    startedAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    timeSpent: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<0>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    user: Schema.Attribute.Relation<
-      'manyToOne',
-      'plugin::users-permissions.user'
-    > &
-      Schema.Attribute.Required;
-  };
-}
-
 export interface ApiQuizSetQuizSet extends Struct.CollectionTypeSchema {
   collectionName: 'quiz_sets';
   info: {
@@ -576,10 +491,6 @@ export interface ApiQuizSetQuizSet extends Struct.CollectionTypeSchema {
     pointsMultiplier: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<1>;
     publishedAt: Schema.Attribute.DateTime;
     questions: Schema.Attribute.JSON & Schema.Attribute.Required;
-    statistics: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::quiz-set-statistic.quiz-set-statistic'
-    >;
     timeLimit: Schema.Attribute.Integer &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<600>;
@@ -640,61 +551,6 @@ export interface ApiQuizStatisticQuizStatistic
   };
 }
 
-export interface ApiQuizQuiz extends Struct.CollectionTypeSchema {
-  collectionName: 'quizzes';
-  info: {
-    description: 'Enhanced quiz system with competition features';
-    displayName: 'Quiz';
-    pluralName: 'quizzes';
-    singularName: 'quiz';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    correctAnswer: Schema.Attribute.Text & Schema.Attribute.Required;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    difficulty: Schema.Attribute.Enumeration<['easy', 'medium', 'hard']> &
-      Schema.Attribute.DefaultTo<'medium'>;
-    isDaily: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::quiz.quiz'> &
-      Schema.Attribute.Private;
-    options: Schema.Attribute.JSON;
-    points: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          max: 100;
-          min: 1;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<10>;
-    publishedAt: Schema.Attribute.DateTime;
-    question: Schema.Attribute.Text & Schema.Attribute.Required;
-    timeLimit: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          max: 300;
-          min: 10;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<30>;
-    type: Schema.Attribute.Enumeration<['multiple-choice', 'text-input']> &
-      Schema.Attribute.DefaultTo<'multiple-choice'>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    user: Schema.Attribute.Relation<
-      'manyToOne',
-      'plugin::users-permissions.user'
-    >;
-  };
-}
-
 export interface ApiUserProgressUserProgress
   extends Struct.CollectionTypeSchema {
   collectionName: 'user_progresses';
@@ -733,32 +589,6 @@ export interface ApiUserProgressUserProgress
       'manyToOne',
       'plugin::users-permissions.user'
     >;
-  };
-}
-
-export interface ApiWordWord extends Struct.CollectionTypeSchema {
-  collectionName: 'words';
-  info: {
-    displayName: 'Word';
-    pluralName: 'words';
-    singularName: 'word';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    english: Schema.Attribute.String;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::word.word'> &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    translation: Schema.Attribute.String;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
   };
 }
 
@@ -1272,15 +1102,11 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
-      'api::chat-group.chat-group': ApiChatGroupChatGroup;
       'api::chat.chat-message': ApiChatChatMessage;
       'api::exercise-statistic.exercise-statistic': ApiExerciseStatisticExerciseStatistic;
-      'api::quiz-set-statistic.quiz-set-statistic': ApiQuizSetStatisticQuizSetStatistic;
       'api::quiz-set.quiz-set': ApiQuizSetQuizSet;
       'api::quiz-statistic.quiz-statistic': ApiQuizStatisticQuizStatistic;
-      'api::quiz.quiz': ApiQuizQuiz;
       'api::user-progress.user-progress': ApiUserProgressUserProgress;
-      'api::word.word': ApiWordWord;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

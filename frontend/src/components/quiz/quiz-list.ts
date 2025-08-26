@@ -1,5 +1,4 @@
-﻿import "./quiz-viewer";
-import "./quiz-set-viewer";
+﻿import "./quiz-set-viewer";
 class QuizList extends HTMLElement {
   shadow: ShadowRoot;
   quizzes: any[] = [];

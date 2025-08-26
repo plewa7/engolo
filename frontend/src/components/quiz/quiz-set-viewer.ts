@@ -1,7 +1,4 @@
-﻿// @ts-ignore
-import quizViewerCss from "../../styles/quiz-viewer.css?inline";
-
-interface QuizQuestion {
+﻿interface QuizQuestion {
   question: string;
   correctAnswer: string;
   options: string[];
@@ -179,7 +176,7 @@ class QuizSetViewer extends HTMLElement {
 
   renderCompleted() {
     this.shadow.innerHTML = `
-      <style>${quizViewerCss}</style>
+      <style></style>
       <div class="quiz-container">
         <div class="quiz-header">
           <h1>${this.quizSet!.title}</h1>
@@ -482,7 +479,6 @@ class QuizSetViewer extends HTMLElement {
 
     this.shadow.innerHTML = `
       <style>
-        ${quizViewerCss}
         
         .quiz-set-preview {
           background: var(--card-bg);
@@ -645,7 +641,6 @@ class QuizSetViewer extends HTMLElement {
 
     this.shadow.innerHTML = `
       <style>
-        ${quizViewerCss}
         
         .quiz-container {
           background: var(--card-bg);
@@ -899,7 +894,6 @@ class QuizSetViewer extends HTMLElement {
 
     this.shadow.innerHTML = `
       <style>
-        ${quizViewerCss}
         
         .results-container {
           background: var(--card-bg);
