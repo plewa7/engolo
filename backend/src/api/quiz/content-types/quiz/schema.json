@@ -5,20 +5,48 @@
     "singularName": "quiz",
     "pluralName": "quizzes",
     "displayName": "Quiz",
-    "description": ""
+    "description": "Enhanced quiz system with competition features"
   },
   "options": {
     "draftAndPublish": true
   },
   "attributes": {
     "question": {
-      "type": "text"
+      "type": "text",
+      "required": true
     },
     "correctAnswer": {
-      "type": "text"
+      "type": "text",
+      "required": true
     },
     "options": {
       "type": "json"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": ["multiple-choice", "text-input"],
+      "default": "multiple-choice"
+    },
+    "points": {
+      "type": "integer",
+      "default": 10,
+      "min": 1,
+      "max": 100
+    },
+    "timeLimit": {
+      "type": "integer",
+      "default": 30,
+      "min": 10,
+      "max": 300
+    },
+    "isDaily": {
+      "type": "boolean",
+      "default": false
+    },
+    "difficulty": {
+      "type": "enumeration",
+      "enum": ["easy", "medium", "hard"],
+      "default": "medium"
     },
     "user": {
       "type": "relation",

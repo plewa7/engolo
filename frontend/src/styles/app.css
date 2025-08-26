@@ -1,31 +1,199 @@
 @import url("./dashboard.css");
+
+:root {
+  /* Light theme colors */
+  --primary: #667eea;
+  --primary-light: #7c93f0;
+  --primary-dark: #5060d8;
+  --secondary: #58cc02;
+  --secondary-light: #89e219;
+  --secondary-dark: #46a302;
+  
+  --background: #f6f8ff;
+  --background-secondary: #ffffff;
+  --background-tertiary: #f8f9fa;
+  
+  --text-primary: #2b2b2b;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --text-inverse: #ffffff;
+  
+  --border: #e1e5e9;
+  --border-light: #f0f0f0;
+  --shadow: rgba(0, 0, 0, 0.1);
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  
+  --success: #4caf50;
+  --warning: #ff9800;
+  --error: #f44336;
+  --info: #2196f3;
+  
+  --navbar-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --card-bg: #ffffff;
+  --hover-bg: #f8f9fa;
+}
+
+[data-theme="dark"] {
+  /* Dark theme colors */
+  --primary: #7c93f0;
+  --primary-light: #9bb1f5;
+  --primary-dark: #667eea;
+  --secondary: #89e219;
+  --secondary-light: #9ee832;
+  --secondary-dark: #58cc02;
+  
+  --background: #0f0f23;
+  --background-secondary: #1a1a2e;
+  --background-tertiary: #16213e;
+  
+  --text-primary: #e8eaed;
+  --text-secondary: #bdc1c6;
+  --text-muted: #9aa0a6;
+  --text-inverse: #2b2b2b;
+  
+  --border: #3c4043;
+  --border-light: #2d2d2d;
+  --shadow: rgba(0, 0, 0, 0.3);
+  --shadow-light: rgba(0, 0, 0, 0.15);
+  
+  --success: #81c784;
+  --warning: #ffb74d;
+  --error: #e57373;
+  --info: #64b5f6;
+  
+  --navbar-bg: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+  --card-bg: #1a1a2e;
+  --hover-bg: #16213e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  transition: color-scheme 0.3s ease;
+}
+
 body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #f6f8ff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--background);
+  color: var(--text-primary);
   margin: 0;
   padding: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  line-height: 1.6;
 }
+
 .app-container {
   max-width: 420px;
   margin: 5em auto 0 auto;
-  background: #fff;
+  background: var(--background-secondary);
   border-radius: 16px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 16px var(--shadow);
   padding: 2.5em 2em 2em 2em;
   text-align: center;
+  transition: all 0.3s ease;
 }
+
 .logout-btn {
   margin-top: 2em;
-  background: #646cff;
-  color: #fff;
+  background: var(--primary);
+  color: var(--text-inverse);
   border: none;
   border-radius: 12px;
   padding: 0.8em 2em;
   font-size: 1.1em;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
 }
+
 .logout-btn:hover {
-  background: #535bf2;
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+/* Dark mode toggle button */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 24px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px var(--shadow);
+  z-index: 1000;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+/* Mobile hamburger menu styles */
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  width: 50px;
+  height: 50px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px var(--shadow);
+  z-index: 1001;
+}
+
+.mobile-menu-toggle:hover {
+  transform: scale(1.05);
+}
+
+.hamburger-line {
+  width: 20px;
+  height: 2px;
+  background: var(--text-primary);
+  margin: 2px 0;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.mobile-menu-toggle.active .hamburger-line:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.mobile-menu-toggle.active .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-menu-toggle.active .hamburger-line:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -6px);
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+  
+  .theme-toggle {
+    top: 20px;
+    right: 80px;
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
 }

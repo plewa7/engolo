@@ -1,3 +1,4 @@
+import "./styles/globals.css";
 import "./components/auth/auth-form";
 import { authStore } from "./features/auth/auth.store";
 

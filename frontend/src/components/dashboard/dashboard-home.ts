@@ -40,21 +40,215 @@ export class DashboardHome extends HTMLElement {
     const imgIndex = Math.floor(Math.random() * dashboardImages.length);
     const dashboardImg = dashboardImages[imgIndex];
     this.innerHTML = `
-      <div class="dashboard-home-bg" style="padding-bottom: 36px;">
-        <div style="display: flex; align-items: center; gap: 18px; justify-content: center; margin-bottom: 18px;">
-          <img src="${avatarUrl}" alt="Avatar" class="dashboard-home-img" style="width: 70px; height: 70px; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); background: #fff;" />
-          <div style="text-align: left;">
-            <h2 style="margin: 0 0 4px 0; font-size: 2em; color: #3a3a5a;">Panel główny</h2>
-            <p style="margin: 0; color: #666; font-size: 1.1em;">Cześć, <b>${username}</b>!</p>
+      <style>
+        .dashboard-home-bg {
+          padding: 36px 20px;
+          background: var(--bg-primary);
+          color: var(--text-primary);
+          transition: all var(--transition-normal);
+          min-height: calc(100vh - 70px);
+        }
+        
+        .dashboard-container {
+          max-width: 1000px;
+          margin: 0 auto;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        .welcome-section {
+          background: var(--card-bg);
+          border-radius: var(--border-radius-lg);
+          padding: 32px;
+          margin-bottom: 32px;
+          box-shadow: var(--shadow-md);
+          border: 1px solid var(--card-border);
+          text-align: center;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease 0.2s forwards;
+        }
+        
+        .profile-avatar {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          margin: 0 auto 16px auto;
+          border: 4px solid var(--primary);
+          box-shadow: var(--shadow-md);
+        }
+        
+        .welcome-title {
+          font-size: var(--font-size-2xl);
+          font-weight: 600;
+          color: var(--text-primary);
+          margin: 0 0 8px 0;
+        }
+        
+        .welcome-subtitle {
+          font-size: var(--font-size-lg);
+          color: var(--text-secondary);
+          margin: 0 0 24px 0;
+        }
+        
+        .motivation-text {
+          font-size: var(--font-size-md);
+          color: var(--text-muted);
+          line-height: 1.6;
+          margin: 0;
+        }
+        
+        .dashboard-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 24px;
+          margin-bottom: 32px;
+        }
+        
+        .dashboard-card {
+          background: var(--card-bg);
+          border-radius: var(--border-radius-lg);
+          padding: 24px;
+          box-shadow: var(--shadow-md);
+          border: 1px solid var(--card-border);
+          transition: all var(--transition-normal);
+          opacity: 0;
+          animation: fadeInUp 0.6s ease 0.4s forwards;
+        }
+        
+        .dashboard-card:hover {
+          transform: translateY(-4px);
+          box-shadow: var(--shadow-lg);
+        }
+        
+        .card-icon {
+          font-size: 32px;
+          margin-bottom: 16px;
+          display: block;
+        }
+        
+        .card-title {
+          font-size: var(--font-size-xl);
+          font-weight: 600;
+          color: var(--text-primary);
+          margin: 0 0 8px 0;
+        }
+        
+        .card-description {
+          font-size: var(--font-size-sm);
+          color: var(--text-secondary);
+          line-height: 1.5;
+          margin: 0;
+        }
+        
+        .inspiration-section {
+          background: var(--card-bg);
+          border-radius: var(--border-radius-lg);
+          padding: 24px;
+          box-shadow: var(--shadow-md);
+          border: 1px solid var(--card-border);
+          text-align: center;
+          opacity: 0;
+          animation: fadeInUp 0.6s ease 0.6s forwards;
+        }
+        
+        .inspiration-image {
+          width: 100%;
+          max-width: 400px;
+          height: 200px;
+          object-fit: cover;
+          border-radius: var(--border-radius-md);
+          margin-bottom: 16px;
+          box-shadow: var(--shadow-sm);
+        }
+        
+        .inspiration-caption {
+          font-size: var(--font-size-lg);
+          font-weight: 500;
+          color: var(--text-primary);
+          font-style: italic;
+          margin: 0;
+        }
+        
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .dashboard-home-bg {
+            padding: 20px 16px;
+          }
+          
+          .welcome-section {
+            padding: 24px;
+            margin-bottom: 24px;
+          }
+          
+          .dashboard-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+          
+          .dashboard-card {
+            padding: 20px;
+          }
+          
+          .welcome-title {
+            font-size: var(--font-size-xl);
+          }
+          
+          .profile-avatar {
+            width: 60px;
+            height: 60px;
+          }
+        }
+      </style>
+      
+      <div class="dashboard-home-bg">
+        <div class="dashboard-container">
+          <div class="welcome-section">
+            <img class="profile-avatar" src="${avatarUrl}" alt="Avatar użytkownika" />
+            <h1 class="welcome-title">Witaj, ${username}! 👋</h1>
+            <p class="welcome-subtitle">Miło Cię widzieć w aplikacji Engolo</p>
+            <p class="motivation-text">Każdy dzień to nowa szansa na naukę i rozwój. Wykorzystaj swój potencjał i osiągnij swoje cele!</p>
           </div>
-        </div>
-        <div style="position: relative;">
-          <img src="${dashboardImg.url}" alt="Dashboard" class="dashboard-main-img" style="max-width: 420px; width: 100%; margin: 0 auto; border-radius: 18px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); display: block;" />
-          <div style="position: absolute; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.92); border-radius: 0 0 18px 18px; padding: 12px 18px; font-size: 1.13em; color: #2a2a3a; font-weight: 500; text-align: center; letter-spacing: 0.01em;">${dashboardImg.caption}</div>
-        </div>
-        <div style="margin-top: 32px; text-align: center;">
-          <p style="font-size: 1.15em; color: #3a3a5a; margin-bottom: 10px;">Zacznij dzień od nowej porcji wiedzy, sprawdź wyzwania lub napisz do nauczyciela!</p>
-          <p style="color: #888; font-size: 1em;">Pamiętaj: systematyczność to klucz do sukcesu. Powodzenia!</p>
+          
+          <div class="dashboard-grid">
+            <div class="dashboard-card">
+              <span class="card-icon">🎯</span>
+              <h3 class="card-title">Wyzwania</h3>
+              <p class="card-description">Rozwiązuj quizy i ćwiczenia językowe, aby rozwijać swoje umiejętności w języku angielskim.</p>
+            </div>
+            
+            <div class="dashboard-card">
+              <span class="card-icon">📊</span>
+              <h3 class="card-title">Statystyki</h3>
+              <p class="card-description">Śledź swój postęp, analizuj wyniki i zobacz jak daleko zaszedłeś w nauce.</p>
+            </div>
+            
+            <div class="dashboard-card">
+              <span class="card-icon">💬</span>
+              <h3 class="card-title">Czat</h3>
+              <p class="card-description">Komunikuj się z nauczycielem i innymi uczniami, wymieniaj się doświadczeniami.</p>
+            </div>
+            
+            <div class="dashboard-card">
+              <span class="card-icon">📚</span>
+              <h3 class="card-title">Słownik</h3>
+              <p class="card-description">Sprawdzaj znaczenia nowych słów i poszerzaj swoje słownictwo języka angielskiego.</p>
+            </div>
+          </div>
+          
+          <div class="inspiration-section">
+            <img class="inspiration-image" src="${dashboardImg.url}" alt="Inspirujący obrazek" />
+            <p class="inspiration-caption">${dashboardImg.caption}</p>
+          </div>
         </div>
       </div>
     `;

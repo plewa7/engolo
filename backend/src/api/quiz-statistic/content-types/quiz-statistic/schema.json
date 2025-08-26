@@ -1,0 +1,62 @@
+{
+  "kind": "collectionType",
+  "collectionName": "quiz_statistics",
+  "info": {
+    "singularName": "quiz-statistic",
+    "pluralName": "quiz-statistics",
+    "displayName": "Quiz Statistic",
+    "description": "Enhanced quiz statistics with competition support"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "quizSetId": {
+      "type": "string",
+      "required": true
+    },
+    "answers": {
+      "type": "json"
+    },
+    "percentage": {
+      "type": "decimal"
+    },
+    "isCorrect": {
+      "type": "boolean",
+      "default": true
+    },
+    "attempts": {
+      "type": "integer",
+      "default": 1
+    },
+    "timeSpent": {
+      "type": "integer",
+      "required": true
+    },
+    "completedAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "score": {
+      "type": "integer",
+      "default": 0
+    },
+    "totalPoints": {
+      "type": "integer",
+      "default": 0
+    },
+    "exerciseType": {
+      "type": "string",
+      "default": "quiz_set"
+    },
+    "category": {
+      "type": "string",
+      "default": "Quiz nauczyciela"
+    }
+  }
+}

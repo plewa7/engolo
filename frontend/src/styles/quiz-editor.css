@@ -1,49 +1,213 @@
-/* Quiz Editor Styles */
+/* Modern Quiz Editor Styles */
+.quiz-editor-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 .quiz-editor-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  max-width: 420px;
-  margin: 24px auto;
-  background: #f7fbff;
-  border: 1px solid #1976d2;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px #1976d21a;
-  padding: 28px 24px 20px 24px;
+  gap: 20px;
+  background: var(--card-bg);
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  padding: 40px;
+  transition: all 0.3s ease;
 }
-.quiz-editor-form label {
-  font-weight: 500;
-  color: #1976d2;
+
+.quiz-editor-form:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+}
+
+.form-section {
+  margin-bottom: 35px;
+  padding-bottom: 30px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 20px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 10px;
 }
-.quiz-editor-form input,
-.quiz-editor-form textarea {
-  padding: 8px;
-  border: 1px solid #b3c6e0;
-  border-radius: 6px;
-  font-size: 1em;
-  margin-top: 2px;
+
+.form-group {
+  margin-bottom: 20px;
 }
-.quiz-editor-form button[type="submit"] {
-  margin-top: 16px;
-  background: #1976d2;
-  color: #fff;
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  background: white;
+  color: var(--text-primary);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #2196F3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.form-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 5px;
+}
+
+.type-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.type-option {
+  padding: 20px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.type-option:hover {
+  border-color: #2196F3;
+  background: #f8f9ff;
+  transform: translateY(-2px);
+}
+
+.type-option.active {
+  border-color: #2196F3;
+  background: #e3f2fd;
+  color: #1976D2;
+}
+
+.type-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.type-title {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.type-description {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
   border: none;
-  border-radius: 6px;
-  padding: 10px 0;
-  font-size: 1em;
+  border-radius: 12px;
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
+  margin-top: 30px;
 }
-.quiz-editor-form button[type="submit"]:hover {
-  background: #1565c0;
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
 }
-#status {
-  margin-top: 14px;
-  font-weight: 500;
-  color: #1976d2;
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Status messages */
+.status-message {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 8px;
   text-align: center;
+  font-weight: 500;
+  animation: slideDown 0.3s ease;
 }
+
+.status-success {
+  background: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.status-error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .quiz-editor-container {
+    padding: 15px;
+  }
+  
+  .quiz-editor-form {
+    padding: 25px;
+  }
+  
+  .type-selector {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.quiz-editor-form button[type="submit"] {
+  margin-top: 8px;
+
