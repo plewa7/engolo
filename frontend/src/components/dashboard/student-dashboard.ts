@@ -5,6 +5,7 @@ import "../quiz/challenges-tabs";
 import '../chat/chat-box';
 import "../ui/dictionary";
 import "./student-statistics";
+import "../notifications/notification-panel";
 
 export class StudentDashboard extends HTMLElement {
   static get observedAttributes() {
@@ -64,6 +65,8 @@ export class StudentDashboard extends HTMLElement {
       `;
     } else if (section === "stats") {
       this.innerHTML = `<student-statistics></student-statistics>`;
+    } else if (section === "notifications") {
+      this.innerHTML = `<notification-panel></notification-panel>`;
     } else if (section === "dictionary") {
       this.innerHTML = `
         <div class="dashboard-section">

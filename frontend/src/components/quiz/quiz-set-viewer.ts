@@ -32,6 +32,7 @@ class QuizSetViewer extends HTMLElement {
   earnedPoints: number = 0;
   resultSubmitted: boolean = false; // Zabezpieczenie przed wielokrotnym wysyłaniem
   isFinishing: boolean = false; // Dodatkowe zabezpieczenie przed wielokrotnym finishem
+  notificationSent: boolean = false; // Zabezpieczenie przed wielokrotnym wysyłaniem powiadomienia
   
   constructor() {
     super();
@@ -191,6 +192,7 @@ class QuizSetViewer extends HTMLElement {
     this.timeRemaining = this.quizSet.timeLimit;
     this.resultSubmitted = false; // Reset flagi przed rozpoczęciem nowego quizu
     this.isFinishing = false; // Reset flagi finishing
+    this.notificationSent = false; // Reset flagi powiadomienia
     
     this.startTimer();
     this.render();
@@ -223,8 +225,13 @@ class QuizSetViewer extends HTMLElement {
   }
 
   nextQuestion() {
+    console.log('⏭️ nextQuestion() called - current index:', this.currentQuestionIndex, 'total questions:', this.quizSet?.questions?.length);
+    
     // Sprawdź czy quiz jest już nieaktywny (zabezpieczenie przed wielokrotnym kliknięciem)
-    if (!this.isActive) return;
+    if (!this.isActive) {
+      console.log('❌ Quiz not active, returning');
+      return;
+    }
     
     const form = this.shadow.querySelector('.quiz-form') as HTMLFormElement;
     if (!form) return;
@@ -267,9 +274,13 @@ class QuizSetViewer extends HTMLElement {
       
       this.currentQuestionIndex++;
       
+      console.log('📈 Updated index:', this.currentQuestionIndex, 'vs questions length:', this.quizSet!.questions.length);
+      
       if (this.currentQuestionIndex >= this.quizSet!.questions.length) {
+        console.log('🏁 Should finish quiz - calling finishQuizSet()');
         this.finishQuizSet();
       } else {
+        console.log('➡️ Moving to next question');
         this.render();
       }
     }, 1500);
@@ -277,6 +288,8 @@ class QuizSetViewer extends HTMLElement {
 
   async finishQuizSet() {
     if (!this.isActive || this.isFinishing) return;
+    
+    console.log('🏁 finishQuizSet() wywołana');
     
     this.isFinishing = true;
     this.isActive = false;
@@ -289,11 +302,17 @@ class QuizSetViewer extends HTMLElement {
     const timeSpent = Math.round((Date.now() - this.startTime) / 1000);
     const percentage = Math.round((this.earnedPoints / this.totalPoints) * 100);
 
+    console.log(`📊 Wyniki: czas=${timeSpent}s, wynik=${percentage}%, notificationSent=${this.notificationSent}`);
+
     // Save result to localStorage
     this.saveResult();
 
     // Send result to backend
     await this.submitResult(timeSpent, percentage);
+
+    // Trigger completion notification based on quiz type
+    console.log('🔔 Próba uruchomienia powiadomienia z finishQuizSet...');
+    this.triggerNotificationBasedOnType(percentage);
 
     this.renderResults(timeSpent, percentage);
   }
@@ -324,7 +343,10 @@ class QuizSetViewer extends HTMLElement {
   }
 
   async submitResult(timeSpent: number, percentage: number) {
+    console.log(`📤 submitResult() wywołana: czas=${timeSpent}s, wynik=${percentage}%`);
+    
     if (this.resultSubmitted) {
+      console.log('⚠️ Wynik już przesłany, pomijam submitResult');
       return;
     }
     
@@ -376,12 +398,14 @@ class QuizSetViewer extends HTMLElement {
         if (response.status === 200 && responseJson && responseJson.data) {
           this.resultSubmitted = true;
           this.renderCompleted();
+          console.log('✅ Wynik zapisany pomyślnie w bazie danych');
           this.dispatchEvent(new CustomEvent('quiz-completed', {
             bubbles: true,
             detail: { quizSetId: this.quizSet!.id }
           }));
           return;
         }
+        console.log('✅ Wynik przesłany (bez szczegółowej odpowiedzi)');
         this.dispatchEvent(new CustomEvent('quiz-completed', {
           bubbles: true,
           detail: { quizSetId: this.quizSet!.id }
@@ -959,6 +983,45 @@ class QuizSetViewer extends HTMLElement {
         ${msg}
       </div>
     `;
+  }
+
+  triggerNotificationBasedOnType(percentage: number = 0) {
+    // Prevent multiple notifications
+    if (this.notificationSent) {
+      console.log('📢 Notification already sent, skipping...');
+      return;
+    }
+    
+    this.notificationSent = true;
+    
+    if (!this.quizSet) {
+      console.log('❌ No quiz set data available');
+      return;
+    }
+    
+    // Sprawdź czy to pojedynczy quiz (1 pytanie) czy moduł (więcej pytań)
+    const isQuiz = this.quizSet.questions.length === 1;
+    const isModule = this.quizSet.questions.length > 1;
+    
+    console.log(`📊 Typ ukończenia: ${isQuiz ? 'quiz' : 'moduł'}, liczba pytań: ${this.quizSet.questions.length}, wynik: ${percentage}%`);
+    
+    // Use notification helper for better integration
+    import('../../features/notifications/notification-helper').then(({ notificationHelper }) => {
+      if (isQuiz) {
+        notificationHelper.triggerQuizCompleted(this.quizSet!.title || 'Quiz', percentage);
+        console.log('✅ Quiz completion notification triggered');
+      } else if (isModule) {
+        notificationHelper.triggerModuleCompleted(this.quizSet!.title || 'Zestaw zadań');
+        console.log('✅ Module completion notification triggered');
+      }
+    }).catch(error => {
+      console.error('❌ Failed to trigger notification:', error);
+    });
+  }
+
+  // Backward compatibility - keep old method but redirect to new one
+  triggerModuleCompletedNotification() {
+    this.triggerNotificationBasedOnType();
   }
 }
 

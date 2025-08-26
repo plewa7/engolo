@@ -1,3 +1,5 @@
+import { notificationService } from '../../features/notifications/notification.service';
+
 export class NavbarComponent extends HTMLElement {
   static get observedAttributes() {
     return ["role", "current-section"];
@@ -7,6 +9,7 @@ export class NavbarComponent extends HTMLElement {
   currentSection: string = "dashboard";
   sections: Array<{ key: string; label: string; icon: string }> = [];
   mobileMenuOpen: boolean = false;
+  unreadNotifications: number = 0;
 
   connectedCallback() {
     this.updateSections();
@@ -21,6 +24,7 @@ export class NavbarComponent extends HTMLElement {
     }
     this.render();
     this.setupEventListeners();
+    this.subscribeToNotifications();
   }
 
   attributeChangedCallback(name: string, newValue: string) {
@@ -61,6 +65,41 @@ export class NavbarComponent extends HTMLElement {
         this.closeMobileMenu();
       }
     });
+  }
+
+  subscribeToNotifications() {
+    notificationService.subscribe((notifications) => {
+      this.unreadNotifications = notifications.filter(n => !n.read).length;
+      this.updateNotificationBadges();
+    });
+  }
+
+  updateNotificationBadges() {
+    // Update desktop notification button
+    const desktopBtn = this.querySelector('.nav-btn[data-section="notifications"]');
+    if (desktopBtn) {
+      this.updateNotificationButton(desktopBtn);
+    }
+
+    // Update mobile notification button
+    const mobileBtn = this.querySelector('.mobile-nav-btn[data-section="notifications"]');
+    if (mobileBtn) {
+      this.updateNotificationButton(mobileBtn);
+    }
+  }
+
+  updateNotificationButton(button: Element) {
+    const existingBadge = button.querySelector('.notification-badge');
+    if (existingBadge) {
+      existingBadge.remove();
+    }
+
+    if (this.unreadNotifications > 0) {
+      const badge = document.createElement('span');
+      badge.className = 'notification-badge';
+      badge.textContent = this.unreadNotifications > 99 ? '99+' : this.unreadNotifications.toString();
+      button.appendChild(badge);
+    }
   }
 
   toggleMobileMenu() {

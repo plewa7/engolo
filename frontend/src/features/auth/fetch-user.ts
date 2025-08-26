@@ -15,6 +15,14 @@ export async function fetchUser(jwtKey = "strapi_jwt") {
     if (!res.ok) throw new Error("Unauthorized");
     const user = await res.json();
     setUser(user);
+    
+    // Trigger login notification for students
+    if (user?.role?.name === 'student' || !user?.role) {
+      import('../notifications/notification.helper').then(({ NotificationHelper }) => {
+        NotificationHelper.onUserLogin(user.id?.toString() || 'anonymous');
+      });
+    }
+    
     return user;
   } catch (e) {
     localStorage.removeItem(jwtKey);
