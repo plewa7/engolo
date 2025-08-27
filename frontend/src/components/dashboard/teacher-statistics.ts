@@ -1,4 +1,41 @@
 ﻿import "../../styles/globals.css";
+import {
+  Chart,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  BarController,
+  LineElement,
+  LineController,
+  PointElement,
+  ArcElement,
+  DoughnutController,
+  PieController,
+  ScatterController,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+
+// Rejestrujemy komponenty Chart.js
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  BarController,
+  LineElement,
+  LineController,
+  PointElement,
+  ArcElement,
+  DoughnutController,
+  PieController,
+  ScatterController,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 interface TeacherStatisticData {
   totalStudents: number;
@@ -54,6 +91,7 @@ class TeacherStatistics extends HTMLElement {
   selectedStudentId: string | null = null;
   allUsers: any[] = [];
   allStatistics: any[] = [];
+  private charts: { [key: string]: Chart } = {};
 
   constructor() {
     super();
@@ -62,7 +100,14 @@ class TeacherStatistics extends HTMLElement {
 
   connectedCallback() {
     this.loadStatistics();
-    this.render();
+  }
+
+  disconnectedCallback() {
+    // Zniszcz wykresy przy odłączeniu komponentu
+    Object.values(this.charts).forEach(chart => {
+      if (chart) chart.destroy();
+    });
+    this.charts = {};
   }
 
   async loadStatistics() {
@@ -302,6 +347,11 @@ class TeacherStatistics extends HTMLElement {
     this.selectedView = view;
     this.selectedStudentId = null; // Reset student selection when changing views
     this.render();
+    
+    // Twórz wykresy tylko dla overview
+    if (view === 'overview') {
+      setTimeout(() => this.createCharts(), 100);
+    }
   }
 
   selectStudent(studentId: string | null) {
@@ -357,6 +407,9 @@ class TeacherStatistics extends HTMLElement {
         ${this.renderCurrentView()}
       </div>
     `;
+
+    // Tworzenie wykresów po zaktualizowaniu DOM
+    setTimeout(() => this.createCharts(), 100);
 
     // Dodaj event listenery dla tabów
     this.shadow.querySelectorAll('.nav-tab').forEach(tab => {
@@ -470,6 +523,29 @@ class TeacherStatistics extends HTMLElement {
               </div>
             </div>
           `;}).join('')}
+        </div>
+      </div>
+
+      <!-- Dynamiczne wykresy dla nauczyciela -->
+      <div class="section">
+        <h3>📊 Wykresy analityczne</h3>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h4>Skuteczność studentów</h4>
+            <canvas id="studentsAccuracyChart" width="380" height="300"></canvas>
+          </div>
+          <div class="chart-card">
+            <h4>Postęp w modułach</h4>
+            <canvas id="moduleProgressChart" width="380" height="300"></canvas>
+          </div>
+          <div class="chart-card">
+            <h4>Aktywność studentów</h4>
+            <canvas id="studentActivityChart" width="380" height="300"></canvas>
+          </div>
+          <div class="chart-card">
+            <h4>Czas wykonania zadań</h4>
+            <canvas id="exerciseTimeChart" width="380" height="300"></canvas>
+          </div>
         </div>
       </div>
     `;
@@ -1261,6 +1337,89 @@ class TeacherStatistics extends HTMLElement {
             grid-template-columns: 1fr;
           }
         }
+
+        /* Styles for charts */
+        .charts-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+          gap: 24px;
+          margin-top: 30px;
+        }
+
+        .chart-card {
+          background: linear-gradient(135deg, var(--card-bg) 0%, rgba(255,255,255,0.05) 100%);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 16px;
+          padding: 24px;
+          box-shadow: 
+            0 8px 32px rgba(0,0,0,0.12),
+            0 2px 8px rgba(0,0,0,0.08);
+          backdrop-filter: blur(10px);
+          height: 420px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+
+        .chart-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+          border-radius: 16px 16px 0 0;
+        }
+
+        .chart-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 
+            0 12px 40px rgba(0,0,0,0.15),
+            0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h4 {
+          margin: 0 0 20px 0;
+          color: var(--text-primary);
+          font-size: 18px;
+          font-weight: 600;
+          text-align: center;
+          flex-shrink: 0;
+          background: linear-gradient(135deg, var(--text-primary) 0%, #667eea 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .chart-card canvas {
+          flex: 1;
+          max-width: 100% !important;
+          max-height: 340px !important;
+          width: 380px !important;
+          height: 320px !important;
+          object-fit: contain;
+          border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+          .charts-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+          
+          .chart-card {
+            height: 380px;
+            padding: 20px;
+          }
+          
+          .chart-card canvas {
+            max-height: 300px !important;
+            height: 280px !important;
+          }
+        }
       </style>
     `;
   }
@@ -1376,6 +1535,270 @@ class TeacherStatistics extends HTMLElement {
         </div>
       </div>
     `;
+  }
+
+  private createCharts() {
+    if (!this.statistics || this.selectedView !== 'overview') return;
+
+    // Zniszcz istniejące wykresy jeśli istnieją
+    Object.values(this.charts).forEach(chart => {
+      if (chart) chart.destroy();
+    });
+    this.charts = {};
+
+    this.createStudentsAccuracyChart();
+    this.createModuleProgressChart();
+    this.createStudentActivityChart();
+    this.createExerciseTimeChart();
+  }
+
+  private createStudentsAccuracyChart() {
+    const canvas = this.shadow.querySelector('#studentsAccuracyChart') as HTMLCanvasElement;
+    if (!canvas || !this.statistics) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const topStudents = this.statistics.studentStats.slice(0, 10);
+
+    this.charts.studentsAccuracy = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: topStudents.map(s => s.username),
+        datasets: [{
+          label: 'Skuteczność (%)',
+          data: topStudents.map(s => s.accuracy),
+          backgroundColor: topStudents.map(s => 
+            s.accuracy >= 80 ? '#4CAF50' : 
+            s.accuracy >= 60 ? '#FF9800' : '#F44336'
+          ),
+          borderColor: topStudents.map(s => 
+            s.accuracy >= 80 ? '#45a049' : 
+            s.accuracy >= 60 ? '#f57c00' : '#d32f2f'
+          ),
+          borderWidth: 2,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Skuteczność najlepszych studentów'
+          },
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          },
+          x: {
+            ticks: {
+              maxRotation: 45
+            }
+          }
+        }
+      }
+    });
+  }
+
+  private createModuleProgressChart() {
+    const canvas = this.shadow.querySelector('#moduleProgressChart') as HTMLCanvasElement;
+    if (!canvas || !this.statistics) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const moduleData = this.statistics.modulePerformance;
+
+    this.charts.moduleProgress = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: moduleData.map(m => `Moduł ${m.module}`),
+        datasets: [{
+          label: 'Średnia skuteczność (%)',
+          data: moduleData.map(m => m.averageAccuracy),
+          borderColor: '#2196F3',
+          backgroundColor: 'rgba(33, 150, 243, 0.1)',
+          tension: 0.4,
+          fill: true,
+          yAxisID: 'y'
+        }, {
+          label: 'Studenci ukończyli',
+          data: moduleData.map(m => m.studentsCompleted),
+          borderColor: '#FF9800',
+          backgroundColor: 'rgba(255, 152, 0, 0.1)',
+          tension: 0.4,
+          fill: false,
+          yAxisID: 'y1'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Postęp w modułach'
+          }
+        },
+        scales: {
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            min: 0,
+            max: 100,
+            title: {
+              display: true,
+              text: 'Skuteczność (%)'
+            }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            title: {
+              display: true,
+              text: 'Liczba studentów'
+            },
+            grid: {
+              drawOnChartArea: false,
+            },
+          }
+        }
+      }
+    });
+  }
+
+  private createStudentActivityChart() {
+    const canvas = this.shadow.querySelector('#studentActivityChart') as HTMLCanvasElement;
+    if (!canvas || !this.statistics) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Analizuj aktywność studentów na podstawie liczby zadań
+    const activityData = this.statistics.studentStats.map(student => ({
+      name: student.username,
+      exercises: student.totalExercises,
+      accuracy: student.accuracy
+    })).sort((a, b) => b.exercises - a.exercises).slice(0, 8);
+
+    this.charts.studentActivity = new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Studenci',
+          data: activityData.map(student => ({
+            x: student.exercises,
+            y: student.accuracy
+          })),
+          backgroundColor: activityData.map(s => 
+            s.accuracy >= 80 ? '#4CAF50' : 
+            s.accuracy >= 60 ? '#FF9800' : '#F44336'
+          ),
+          borderColor: activityData.map(s => 
+            s.accuracy >= 80 ? '#45a049' : 
+            s.accuracy >= 60 ? '#f57c00' : '#d32f2f'
+          ),
+          pointRadius: 8,
+          pointHoverRadius: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Aktywność vs Skuteczność studentów'
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const student = activityData[context.dataIndex];
+                return `${student.name}: ${student.exercises} zadań, ${student.accuracy}% skuteczność`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Liczba wykonanych zadań'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Skuteczność (%)'
+            },
+            min: 0,
+            max: 100
+          }
+        }
+      }
+    });
+  }
+
+  private createExerciseTimeChart() {
+    const canvas = this.shadow.querySelector('#exerciseTimeChart') as HTMLCanvasElement;
+    if (!canvas || !this.statistics) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const moduleData = this.statistics.modulePerformance;
+
+    this.charts.exerciseTime = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: moduleData.map(m => `Moduł ${m.module}`),
+        datasets: [{
+          label: 'Średni czas (sekundy)',
+          data: moduleData.map(m => m.averageTime),
+          backgroundColor: 'rgba(156, 39, 176, 0.8)',
+          borderColor: '#9C27B0',
+          borderWidth: 2,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Średni czas wykonania zadań w modułach'
+          },
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return value + 's';
+              }
+            }
+          }
+        }
+      }
+    });
   }
 }
 

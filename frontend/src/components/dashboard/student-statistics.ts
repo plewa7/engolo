@@ -1,4 +1,37 @@
 ﻿import "../../styles/globals.css";
+import {
+  Chart,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  PointElement,
+  ArcElement,
+  DoughnutController,
+  BarController,
+  LineController,
+  ScatterController
+} from 'chart.js';
+
+// Rejestracja kontrolerów Chart.js
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  DoughnutController,
+  BarController,
+  LineController,
+  ScatterController
+);
 
 interface StatisticData {
   totalExercises: number;
@@ -48,6 +81,7 @@ class StudentStatistics extends HTMLElement {
   shadow: ShadowRoot;
   statistics: StatisticData | null = null;
   loading: boolean = true;
+  charts: { [key: string]: Chart } = {};
 
   constructor() {
     super();
@@ -134,6 +168,8 @@ class StudentStatistics extends HTMLElement {
     } finally {
       this.loading = false;
       this.render();
+      // Utwórz wykresy po renderowaniu
+      setTimeout(() => this.createCharts(), 100);
     }
   }
 
@@ -479,6 +515,29 @@ class StudentStatistics extends HTMLElement {
             `}
           </div>
         </div>
+
+        <!-- Sekcja wykresów -->
+        <div class="section">
+          <h3>📊 Analiza statystyk</h3>
+          <div class="charts-grid">
+            <div class="chart-card">
+              <h4>Skuteczność w modułach</h4>
+              <canvas id="moduleAccuracyChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <h4>Postęp w czasie</h4>
+              <canvas id="progressTimeChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <h4>Rozkład typów ćwiczeń</h4>
+              <canvas id="exerciseTypesChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <h4>Analiza czasu</h4>
+              <canvas id="timeChart"></canvas>
+            </div>
+          </div>
+        </div>
       </div>
     `;
   }
@@ -677,6 +736,72 @@ class StudentStatistics extends HTMLElement {
           color: #d32f2f;
         }
 
+        /* Styles for charts */
+        .charts-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+          gap: 24px;
+          margin-top: 30px;
+        }
+
+        .chart-card {
+          background: linear-gradient(135deg, var(--card-bg) 0%, rgba(255,255,255,0.05) 100%);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 16px;
+          padding: 24px;
+          box-shadow: 
+            0 8px 32px rgba(0,0,0,0.12),
+            0 2px 8px rgba(0,0,0,0.08);
+          backdrop-filter: blur(10px);
+          height: 420px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+
+        .chart-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+          border-radius: 16px 16px 0 0;
+        }
+
+        .chart-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 
+            0 12px 40px rgba(0,0,0,0.15),
+            0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h4 {
+          margin: 0 0 20px 0;
+          color: var(--text-primary);
+          font-size: 18px;
+          font-weight: 600;
+          text-align: center;
+          flex-shrink: 0;
+          background: linear-gradient(135deg, var(--text-primary) 0%, #667eea 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .chart-card canvas {
+          flex: 1;
+          max-width: 100% !important;
+          max-height: 340px !important;
+          width: 380px !important;
+          height: 320px !important;
+          object-fit: contain;
+          border-radius: 8px;
+        }
+
         .no-data-small {
           color: var(--text-muted);
           font-size: 14px;
@@ -786,6 +911,21 @@ class StudentStatistics extends HTMLElement {
             flex-direction: column;
             gap: 5px;
           }
+
+          .charts-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+          
+          .chart-card {
+            height: 380px;
+            padding: 20px;
+          }
+          
+          .chart-card canvas {
+            max-height: 300px !important;
+            height: 280px !important;
+          }
         }
 
         /* Animacje */
@@ -812,6 +952,411 @@ class StudentStatistics extends HTMLElement {
         }
       </style>
     `;
+  }
+
+  // Funkcje wykresów
+  private createCharts() {
+    this.createModuleAccuracyChart();
+    this.createProgressTimeChart();
+    this.createExerciseTypesChart();
+    this.createTimeChart();
+  }
+
+  private createModuleAccuracyChart() {
+    const canvas = this.shadow.querySelector('#moduleAccuracyChart') as HTMLCanvasElement;
+    if (!canvas || !this.statistics) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const moduleData = this.statistics.moduleStats.map(module => ({
+      label: `Moduł ${module.module}`,
+      accuracy: module.accuracy,
+      completed: module.completed,
+      total: module.total
+    }));
+
+    this.charts.moduleAccuracy = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: moduleData.map(m => m.label),
+        datasets: [{
+          label: 'Skuteczność (%)',
+          data: moduleData.map(m => m.accuracy),
+          backgroundColor: [
+            'rgba(102, 126, 234, 0.8)',
+            'rgba(118, 75, 162, 0.8)', 
+            'rgba(240, 147, 251, 0.8)',
+            'rgba(129, 140, 248, 0.8)',
+            'rgba(167, 139, 250, 0.8)'
+          ],
+          borderColor: [
+            'rgba(102, 126, 234, 1)',
+            'rgba(118, 75, 162, 1)',
+            'rgba(240, 147, 251, 1)',
+            'rgba(129, 140, 248, 1)',
+            'rgba(167, 139, 250, 1)'
+          ],
+          borderWidth: 2,
+          borderRadius: 12,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: false
+          },
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: 'rgba(255, 255, 255, 0.2)',
+            borderWidth: 1,
+            cornerRadius: 12,
+            caretPadding: 10,
+            titleFont: { size: 14, weight: 'bold' },
+            bodyFont: { size: 13 }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)',
+              lineWidth: 1
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)',
+              font: { size: 12 },
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)',
+              font: { size: 12 }
+            }
+          }
+        },
+        animation: {
+          duration: 1500,
+          easing: 'easeOutQuart'
+        }
+      }
+    });
+  }
+
+  private createProgressTimeChart() {
+    const canvas = this.shadow.querySelector('#progressTimeChart') as HTMLCanvasElement;
+    if (!canvas || !this.statistics) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const last10Activities = this.statistics.recentActivity.slice(0, 10).reverse();
+    const labels = last10Activities.map((_, index) => `Zadanie ${index + 1}`);
+    const accuracyData = last10Activities.map(activity => activity.isCorrect ? 100 : 0);
+    const timeData = last10Activities.map(activity => activity.timeSpent);
+
+    this.charts.progressTime = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Skuteczność',
+          data: accuracyData,
+          borderColor: '#667eea',
+          backgroundColor: 'rgba(102, 126, 234, 0.1)',
+          tension: 0.4,
+          fill: true,
+          borderWidth: 3,
+          pointBackgroundColor: '#667eea',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          yAxisID: 'y'
+        }, {
+          label: 'Czas (sekundy)',
+          data: timeData,
+          borderColor: '#f093fb',
+          backgroundColor: 'rgba(240, 147, 251, 0.1)',
+          tension: 0.4,
+          fill: false,
+          borderWidth: 3,
+          pointBackgroundColor: '#f093fb',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          yAxisID: 'y1'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: false
+          },
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              color: 'rgba(255, 255, 255, 0.8)',
+              font: { size: 12 },
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: 'rgba(255, 255, 255, 0.2)',
+            borderWidth: 1,
+            cornerRadius: 12,
+            caretPadding: 10,
+            titleFont: { size: 14, weight: 'bold' },
+            bodyFont: { size: 13 }
+          }
+        },
+        scales: {
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            beginAtZero: true,
+            max: 100,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)',
+              lineWidth: 1
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)',
+              font: { size: 11 },
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            beginAtZero: true,
+            grid: {
+              drawOnChartArea: false,
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)',
+              font: { size: 11 },
+              callback: function(value) {
+                return value + 's';
+              }
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)',
+              font: { size: 10 }
+            }
+          }
+        },
+        animation: {
+          duration: 2000,
+          easing: 'easeOutCubic'
+        }
+      }
+    });
+  }
+
+  private createExerciseTypesChart() {
+    const canvas = this.shadow.querySelector('#exerciseTypesChart') as HTMLCanvasElement;
+    if (!canvas || !this.statistics) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const exerciseTypes = this.statistics.recentActivity.reduce((acc: any, activity) => {
+      acc[activity.exerciseType] = (acc[activity.exerciseType] || 0) + 1;
+      return acc;
+    }, {});
+
+    this.charts.exerciseTypes = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(exerciseTypes),
+        datasets: [{
+          data: Object.values(exerciseTypes),
+          backgroundColor: [
+            'rgba(102, 126, 234, 0.8)',
+            'rgba(118, 75, 162, 0.8)',
+            'rgba(240, 147, 251, 0.8)',
+            'rgba(129, 140, 248, 0.8)',
+            'rgba(167, 139, 250, 0.8)',
+            'rgba(236, 72, 153, 0.8)'
+          ],
+          borderColor: [
+            'rgba(102, 126, 234, 1)',
+            'rgba(118, 75, 162, 1)',
+            'rgba(240, 147, 251, 1)',
+            'rgba(129, 140, 248, 1)',
+            'rgba(167, 139, 250, 1)',
+            'rgba(236, 72, 153, 1)'
+          ],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: 'rgba(255, 255, 255, 0.8)',
+              font: { size: 12 },
+              padding: 15,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: 'rgba(255, 255, 255, 0.2)',
+            borderWidth: 1,
+            cornerRadius: 12,
+            caretPadding: 10,
+            titleFont: { size: 14, weight: 'bold' },
+            bodyFont: { size: 13 }
+          }
+        },
+        animation: {
+          animateRotate: true,
+          duration: 2000
+        }
+      }
+    });
+  }
+
+  private createTimeChart() {
+    const canvas = this.shadow.querySelector('#timeChart') as HTMLCanvasElement;
+    if (!canvas || !this.statistics) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const timeRanges = {
+      'Szybko (0-30s)': 0,
+      'Średnio (30-60s)': 0,
+      'Wolno (60-120s)': 0,
+      'Bardzo wolno (120s+)': 0
+    };
+
+    this.statistics.recentActivity.forEach(activity => {
+      if (activity.timeSpent <= 30) timeRanges['Szybko (0-30s)']++;
+      else if (activity.timeSpent <= 60) timeRanges['Średnio (30-60s)']++;
+      else if (activity.timeSpent <= 120) timeRanges['Wolno (60-120s)']++;
+      else timeRanges['Bardzo wolno (120s+)']++;
+    });
+
+    this.charts.timeAnalysis = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(timeRanges),
+        datasets: [{
+          label: 'Liczba zadań',
+          data: Object.values(timeRanges),
+          backgroundColor: [
+            'rgba(34, 197, 94, 0.8)',
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(251, 146, 60, 0.8)',
+            'rgba(239, 68, 68, 0.8)'
+          ],
+          borderColor: [
+            'rgba(34, 197, 94, 1)',
+            'rgba(59, 130, 246, 1)',
+            'rgba(251, 146, 60, 1)',
+            'rgba(239, 68, 68, 1)'
+          ],
+          borderWidth: 2,
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: 'rgba(255, 255, 255, 0.2)',
+            borderWidth: 1,
+            cornerRadius: 12,
+            caretPadding: 10,
+            titleFont: { size: 14, weight: 'bold' },
+            bodyFont: { size: 13 }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)',
+              lineWidth: 1
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)',
+              font: { size: 12 }
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)',
+              font: { size: 10 }
+            }
+          }
+        },
+        animation: {
+          duration: 1500,
+          easing: 'easeOutBounce'
+        }
+      }
+    });
+  }
+
+  disconnectedCallback() {
+    // Zniszcz wykresy przy usuwaniu komponentu
+    Object.values(this.charts).forEach(chart => {
+      if (chart) {
+        chart.destroy();
+      }
+    });
+    this.charts = {};
   }
 }
 
