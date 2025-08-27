@@ -1,6 +1,6 @@
-# 🎓 Engolo - Interaktywna Platforma Nauki Języków
+# 🎓 Engolo - Interaktywna Platforma Nauki Języka Angielskiego
 
-Engolo to nowoczesna platforma edukacyjna do nauki języków, składająca się z backendu opartego na Strapi CMS oraz frontendu zbudowanego w TypeScript z wykorzystaniem Lit.
+Engolo to nowoczesna platforma edukacyjna do nauki języka angielskiego, składająca się z backendu opartego na Strapi CMS oraz frontendu zbudowanego w TypeScript z wykorzystaniem Lit.
 
 ## 📋 Spis treści
 
