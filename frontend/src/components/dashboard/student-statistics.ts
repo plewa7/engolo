@@ -518,23 +518,12 @@ class StudentStatistics extends HTMLElement {
 
         <!-- Sekcja wykresów -->
         <div class="section">
-          <h3>📊 Analiza statystyk</h3>
-          <div class="charts-grid">
-            <div class="chart-card">
-              <h4>Skuteczność w modułach</h4>
+          <h3>📊 Twoja skuteczność w modułach</h3>
+          <div class="single-chart-container">
+            <div class="main-chart-card">
+              <h4>Postęp i skuteczność nauki</h4>
+              <p class="chart-description">Zobacz jak radzisz sobie w poszczególnych modułach językowych</p>
               <canvas id="moduleAccuracyChart"></canvas>
-            </div>
-            <div class="chart-card">
-              <h4>Postęp w czasie</h4>
-              <canvas id="progressTimeChart"></canvas>
-            </div>
-            <div class="chart-card">
-              <h4>Rozkład typów ćwiczeń</h4>
-              <canvas id="exerciseTypesChart"></canvas>
-            </div>
-            <div class="chart-card">
-              <h4>Analiza czasu</h4>
-              <canvas id="timeChart"></canvas>
             </div>
           </div>
         </div>
@@ -737,11 +726,60 @@ class StudentStatistics extends HTMLElement {
         }
 
         /* Styles for charts */
-        .charts-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-          gap: 24px;
-          margin-top: 30px;
+        .single-chart-container {
+          max-width: 900px;
+          margin: 30px auto 0;
+          padding: 0 20px;
+        }
+
+        .main-chart-card {
+          background: linear-gradient(135deg, var(--card-bg) 0%, rgba(255,255,255,0.05) 100%);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 20px;
+          padding: 32px;
+          box-shadow: 
+            0 12px 40px rgba(0,0,0,0.15),
+            0 4px 12px rgba(0,0,0,0.1);
+          backdrop-filter: blur(10px);
+          height: 500px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+
+        .main-chart-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+          border-radius: 20px 20px 0 0;
+        }
+
+        .main-chart-card h4 {
+          color: var(--text-primary);
+          margin: 0 0 8px 0;
+          font-size: 22px;
+          font-weight: 600;
+        }
+
+        .chart-description {
+          color: var(--text-secondary);
+          margin: 0 0 24px 0;
+          font-size: 14px;
+          line-height: 1.4;
+        }
+
+        .main-chart-card canvas {
+          flex: 1;
+          max-width: 100% !important;
+          max-height: 420px !important;
+          width: 100% !important;
+          height: 400px !important;
         }
 
         .chart-card {
@@ -912,12 +950,24 @@ class StudentStatistics extends HTMLElement {
             gap: 5px;
           }
 
-          .charts-grid {
-            grid-template-columns: 1fr;
-            gap: 20px;
+          .single-chart-container {
+            padding: 0 10px;
           }
           
-          .chart-card {
+          .main-chart-card {
+            padding: 20px;
+            height: 400px;
+          }
+
+          .main-chart-card h4 {
+            font-size: 18px;
+          }
+
+          .chart-description {
+            font-size: 13px;
+            margin-bottom: 16px;
+          }
+        }
             height: 380px;
             padding: 20px;
           }
@@ -956,10 +1006,8 @@ class StudentStatistics extends HTMLElement {
 
   // Funkcje wykresów
   private createCharts() {
+    // Only create the main module accuracy chart for better readability
     this.createModuleAccuracyChart();
-    this.createProgressTimeChart();
-    this.createExerciseTypesChart();
-    this.createTimeChart();
   }
 
   private createModuleAccuracyChart() {
@@ -973,7 +1021,8 @@ class StudentStatistics extends HTMLElement {
       label: `Moduł ${module.module}`,
       accuracy: module.accuracy,
       completed: module.completed,
-      total: module.total
+      total: module.total,
+      progress: module.total > 0 ? (module.completed / module.total) * 100 : 0
     }));
 
     this.charts.moduleAccuracy = new Chart(ctx, {
@@ -983,21 +1032,31 @@ class StudentStatistics extends HTMLElement {
         datasets: [{
           label: 'Skuteczność (%)',
           data: moduleData.map(m => m.accuracy),
-          backgroundColor: [
-            'rgba(102, 126, 234, 0.8)',
-            'rgba(118, 75, 162, 0.8)', 
-            'rgba(240, 147, 251, 0.8)',
-            'rgba(129, 140, 248, 0.8)',
-            'rgba(167, 139, 250, 0.8)'
-          ],
-          borderColor: [
-            'rgba(102, 126, 234, 1)',
-            'rgba(118, 75, 162, 1)',
-            'rgba(240, 147, 251, 1)',
-            'rgba(129, 140, 248, 1)',
-            'rgba(167, 139, 250, 1)'
-          ],
-          borderWidth: 2,
+          backgroundColor: moduleData.map((m, index) => {
+            const colors = [
+              'rgba(76, 175, 80, 0.8)',   // Green for good performance
+              'rgba(33, 150, 243, 0.8)',  // Blue 
+              'rgba(156, 39, 176, 0.8)',  // Purple
+              'rgba(255, 193, 7, 0.8)',   // Amber
+              'rgba(255, 87, 34, 0.8)'    // Deep Orange
+            ];
+            return m.accuracy >= 80 ? colors[0] : // Green for good
+                   m.accuracy >= 60 ? colors[1] : // Blue for average
+                   colors[index % colors.length]; // Other colors for lower
+          }),
+          borderColor: moduleData.map((m, index) => {
+            const colors = [
+              'rgba(76, 175, 80, 1)',
+              'rgba(33, 150, 243, 1)', 
+              'rgba(156, 39, 176, 1)',
+              'rgba(255, 193, 7, 1)',
+              'rgba(255, 87, 34, 1)'
+            ];
+            return m.accuracy >= 80 ? colors[0] :
+                   m.accuracy >= 60 ? colors[1] :
+                   colors[index % colors.length];
+          }),
+          borderWidth: 3,
           borderRadius: 12,
           borderSkipped: false,
         }]
@@ -1013,15 +1072,28 @@ class StudentStatistics extends HTMLElement {
             display: false
           },
           tooltip: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
             titleColor: '#fff',
             bodyColor: '#fff',
-            borderColor: 'rgba(255, 255, 255, 0.2)',
+            borderColor: 'rgba(255, 255, 255, 0.3)',
             borderWidth: 1,
             cornerRadius: 12,
             caretPadding: 10,
-            titleFont: { size: 14, weight: 'bold' },
-            bodyFont: { size: 13 }
+            titleFont: { size: 16, weight: 'bold' },
+            bodyFont: { size: 14 },
+            callbacks: {
+              afterBody: function(context) {
+                const dataIndex = context[0].dataIndex;
+                const module = moduleData[dataIndex];
+                return [
+                  `Postęp: ${module.completed}/${module.total} zadań (${Math.round(module.progress)}%)`,
+                  ``,
+                  module.accuracy >= 80 ? '🎉 Świetna robota!' :
+                  module.accuracy >= 60 ? '👍 Dobry wynik!' :
+                  '💪 Możesz to poprawić!'
+                ];
+              }
+            }
           }
         },
         scales: {
@@ -1033,11 +1105,17 @@ class StudentStatistics extends HTMLElement {
               lineWidth: 1
             },
             ticks: {
-              color: 'rgba(255, 255, 255, 0.7)',
-              font: { size: 12 },
+              color: 'rgba(255, 255, 255, 0.8)',
+              font: { size: 13, weight: 'normal' },
               callback: function(value) {
                 return value + '%';
               }
+            },
+            title: {
+              display: true,
+              text: 'Skuteczność (%)',
+              color: 'rgba(255, 255, 255, 0.9)',
+              font: { size: 14, weight: 'bold' }
             }
           },
           x: {
@@ -1045,305 +1123,14 @@ class StudentStatistics extends HTMLElement {
               display: false
             },
             ticks: {
-              color: 'rgba(255, 255, 255, 0.7)',
-              font: { size: 12 }
+              color: 'rgba(255, 255, 255, 0.8)',
+              font: { size: 12, weight: 'normal' }
             }
           }
         },
         animation: {
           duration: 1500,
           easing: 'easeOutQuart'
-        }
-      }
-    });
-  }
-
-  private createProgressTimeChart() {
-    const canvas = this.shadow.querySelector('#progressTimeChart') as HTMLCanvasElement;
-    if (!canvas || !this.statistics) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const last10Activities = this.statistics.recentActivity.slice(0, 10).reverse();
-    const labels = last10Activities.map((_, index) => `Zadanie ${index + 1}`);
-    const accuracyData = last10Activities.map(activity => activity.isCorrect ? 100 : 0);
-    const timeData = last10Activities.map(activity => activity.timeSpent);
-
-    this.charts.progressTime = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Skuteczność',
-          data: accuracyData,
-          borderColor: '#667eea',
-          backgroundColor: 'rgba(102, 126, 234, 0.1)',
-          tension: 0.4,
-          fill: true,
-          borderWidth: 3,
-          pointBackgroundColor: '#667eea',
-          pointBorderColor: '#ffffff',
-          pointBorderWidth: 2,
-          pointRadius: 6,
-          pointHoverRadius: 8,
-          yAxisID: 'y'
-        }, {
-          label: 'Czas (sekundy)',
-          data: timeData,
-          borderColor: '#f093fb',
-          backgroundColor: 'rgba(240, 147, 251, 0.1)',
-          tension: 0.4,
-          fill: false,
-          borderWidth: 3,
-          pointBackgroundColor: '#f093fb',
-          pointBorderColor: '#ffffff',
-          pointBorderWidth: 2,
-          pointRadius: 6,
-          pointHoverRadius: 8,
-          yAxisID: 'y1'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          title: {
-            display: false
-          },
-          legend: {
-            display: true,
-            position: 'top',
-            labels: {
-              color: 'rgba(255, 255, 255, 0.8)',
-              font: { size: 12 },
-              usePointStyle: true,
-              pointStyle: 'circle'
-            }
-          },
-          tooltip: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            titleColor: '#fff',
-            bodyColor: '#fff',
-            borderColor: 'rgba(255, 255, 255, 0.2)',
-            borderWidth: 1,
-            cornerRadius: 12,
-            caretPadding: 10,
-            titleFont: { size: 14, weight: 'bold' },
-            bodyFont: { size: 13 }
-          }
-        },
-        scales: {
-          y: {
-            type: 'linear',
-            display: true,
-            position: 'left',
-            beginAtZero: true,
-            max: 100,
-            grid: {
-              color: 'rgba(255, 255, 255, 0.1)',
-              lineWidth: 1
-            },
-            ticks: {
-              color: 'rgba(255, 255, 255, 0.7)',
-              font: { size: 11 },
-              callback: function(value) {
-                return value + '%';
-              }
-            }
-          },
-          y1: {
-            type: 'linear',
-            display: true,
-            position: 'right',
-            beginAtZero: true,
-            grid: {
-              drawOnChartArea: false,
-            },
-            ticks: {
-              color: 'rgba(255, 255, 255, 0.7)',
-              font: { size: 11 },
-              callback: function(value) {
-                return value + 's';
-              }
-            }
-          },
-          x: {
-            grid: {
-              display: false
-            },
-            ticks: {
-              color: 'rgba(255, 255, 255, 0.7)',
-              font: { size: 10 }
-            }
-          }
-        },
-        animation: {
-          duration: 2000,
-          easing: 'easeOutCubic'
-        }
-      }
-    });
-  }
-
-  private createExerciseTypesChart() {
-    const canvas = this.shadow.querySelector('#exerciseTypesChart') as HTMLCanvasElement;
-    if (!canvas || !this.statistics) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const exerciseTypes = this.statistics.recentActivity.reduce((acc: any, activity) => {
-      acc[activity.exerciseType] = (acc[activity.exerciseType] || 0) + 1;
-      return acc;
-    }, {});
-
-    this.charts.exerciseTypes = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(exerciseTypes),
-        datasets: [{
-          data: Object.values(exerciseTypes),
-          backgroundColor: [
-            'rgba(102, 126, 234, 0.8)',
-            'rgba(118, 75, 162, 0.8)',
-            'rgba(240, 147, 251, 0.8)',
-            'rgba(129, 140, 248, 0.8)',
-            'rgba(167, 139, 250, 0.8)',
-            'rgba(236, 72, 153, 0.8)'
-          ],
-          borderColor: [
-            'rgba(102, 126, 234, 1)',
-            'rgba(118, 75, 162, 1)',
-            'rgba(240, 147, 251, 1)',
-            'rgba(129, 140, 248, 1)',
-            'rgba(167, 139, 250, 1)',
-            'rgba(236, 72, 153, 1)'
-          ],
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              color: 'rgba(255, 255, 255, 0.8)',
-              font: { size: 12 },
-              padding: 15,
-              usePointStyle: true
-            }
-          },
-          tooltip: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            titleColor: '#fff',
-            bodyColor: '#fff',
-            borderColor: 'rgba(255, 255, 255, 0.2)',
-            borderWidth: 1,
-            cornerRadius: 12,
-            caretPadding: 10,
-            titleFont: { size: 14, weight: 'bold' },
-            bodyFont: { size: 13 }
-          }
-        },
-        animation: {
-          animateRotate: true,
-          duration: 2000
-        }
-      }
-    });
-  }
-
-  private createTimeChart() {
-    const canvas = this.shadow.querySelector('#timeChart') as HTMLCanvasElement;
-    if (!canvas || !this.statistics) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const timeRanges = {
-      'Szybko (0-30s)': 0,
-      'Średnio (30-60s)': 0,
-      'Wolno (60-120s)': 0,
-      'Bardzo wolno (120s+)': 0
-    };
-
-    this.statistics.recentActivity.forEach(activity => {
-      if (activity.timeSpent <= 30) timeRanges['Szybko (0-30s)']++;
-      else if (activity.timeSpent <= 60) timeRanges['Średnio (30-60s)']++;
-      else if (activity.timeSpent <= 120) timeRanges['Wolno (60-120s)']++;
-      else timeRanges['Bardzo wolno (120s+)']++;
-    });
-
-    this.charts.timeAnalysis = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: Object.keys(timeRanges),
-        datasets: [{
-          label: 'Liczba zadań',
-          data: Object.values(timeRanges),
-          backgroundColor: [
-            'rgba(34, 197, 94, 0.8)',
-            'rgba(59, 130, 246, 0.8)',
-            'rgba(251, 146, 60, 0.8)',
-            'rgba(239, 68, 68, 0.8)'
-          ],
-          borderColor: [
-            'rgba(34, 197, 94, 1)',
-            'rgba(59, 130, 246, 1)',
-            'rgba(251, 146, 60, 1)',
-            'rgba(239, 68, 68, 1)'
-          ],
-          borderWidth: 2,
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          },
-          tooltip: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            titleColor: '#fff',
-            bodyColor: '#fff',
-            borderColor: 'rgba(255, 255, 255, 0.2)',
-            borderWidth: 1,
-            cornerRadius: 12,
-            caretPadding: 10,
-            titleFont: { size: 14, weight: 'bold' },
-            bodyFont: { size: 13 }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: 'rgba(255, 255, 255, 0.1)',
-              lineWidth: 1
-            },
-            ticks: {
-              color: 'rgba(255, 255, 255, 0.7)',
-              font: { size: 12 }
-            }
-          },
-          x: {
-            grid: {
-              display: false
-            },
-            ticks: {
-              color: 'rgba(255, 255, 255, 0.7)',
-              font: { size: 10 }
-            }
-          }
-        },
-        animation: {
-          duration: 1500,
-          easing: 'easeOutBounce'
         }
       }
     });

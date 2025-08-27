@@ -539,10 +539,6 @@ class TeacherStatistics extends HTMLElement {
             <canvas id="moduleProgressChart" width="380" height="300"></canvas>
           </div>
           <div class="chart-card">
-            <h4>Aktywność studentów</h4>
-            <canvas id="studentActivityChart" width="380" height="300"></canvas>
-          </div>
-          <div class="chart-card">
             <h4>Czas wykonania zadań</h4>
             <canvas id="exerciseTimeChart" width="380" height="300"></canvas>
           </div>
@@ -1548,7 +1544,6 @@ class TeacherStatistics extends HTMLElement {
 
     this.createStudentsAccuracyChart();
     this.createModuleProgressChart();
-    this.createStudentActivityChart();
     this.createExerciseTimeChart();
   }
 
@@ -1675,78 +1670,6 @@ class TeacherStatistics extends HTMLElement {
             grid: {
               drawOnChartArea: false,
             },
-          }
-        }
-      }
-    });
-  }
-
-  private createStudentActivityChart() {
-    const canvas = this.shadow.querySelector('#studentActivityChart') as HTMLCanvasElement;
-    if (!canvas || !this.statistics) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Analizuj aktywność studentów na podstawie liczby zadań
-    const activityData = this.statistics.studentStats.map(student => ({
-      name: student.username,
-      exercises: student.totalExercises,
-      accuracy: student.accuracy
-    })).sort((a, b) => b.exercises - a.exercises).slice(0, 8);
-
-    this.charts.studentActivity = new Chart(ctx, {
-      type: 'scatter',
-      data: {
-        datasets: [{
-          label: 'Studenci',
-          data: activityData.map(student => ({
-            x: student.exercises,
-            y: student.accuracy
-          })),
-          backgroundColor: activityData.map(s => 
-            s.accuracy >= 80 ? '#4CAF50' : 
-            s.accuracy >= 60 ? '#FF9800' : '#F44336'
-          ),
-          borderColor: activityData.map(s => 
-            s.accuracy >= 80 ? '#45a049' : 
-            s.accuracy >= 60 ? '#f57c00' : '#d32f2f'
-          ),
-          pointRadius: 8,
-          pointHoverRadius: 10
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          title: {
-            display: true,
-            text: 'Aktywność vs Skuteczność studentów'
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                const student = activityData[context.dataIndex];
-                return `${student.name}: ${student.exercises} zadań, ${student.accuracy}% skuteczność`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: 'Liczba wykonanych zadań'
-            }
-          },
-          y: {
-            title: {
-              display: true,
-              text: 'Skuteczność (%)'
-            },
-            min: 0,
-            max: 100
           }
         }
       }
