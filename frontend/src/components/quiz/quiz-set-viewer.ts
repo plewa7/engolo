@@ -1,7 +1,4 @@
-﻿// @ts-ignore
-import quizViewerCss from "../../styles/quiz-viewer.css?inline";
-
-interface QuizQuestion {
+﻿interface QuizQuestion {
   question: string;
   correctAnswer: string;
   options: string[];
@@ -35,6 +32,7 @@ class QuizSetViewer extends HTMLElement {
   earnedPoints: number = 0;
   resultSubmitted: boolean = false; // Zabezpieczenie przed wielokrotnym wysyłaniem
   isFinishing: boolean = false; // Dodatkowe zabezpieczenie przed wielokrotnym finishem
+  notificationSent: boolean = false; // Zabezpieczenie przed wielokrotnym wysyłaniem powiadomienia
   
   constructor() {
     super();
@@ -67,9 +65,7 @@ class QuizSetViewer extends HTMLElement {
   }
 
   async loadQuizSet() {
-    // Najpierw spróbuj użyć danych przekazanych bezpośrednio
     if (this.quizSetData) {
-      console.log("🔍 Using direct data:", this.quizSetData);
       try {
         this.quizSet = {
           id: this.quizSetId || this.quizSetData.id || "unknown",
@@ -80,10 +76,8 @@ class QuizSetViewer extends HTMLElement {
           isDaily: this.quizSetData.isDaily || false,
           category: this.quizSetData.category || "Ogólny"
         };
-        console.log("🔍 Created quizSet from direct data:", this.quizSet);
         this.totalPoints = this.quizSet.questions.reduce((sum, q) => sum + (q.points || 10), 0);
         
-        // Sprawdź czy quiz-set już został rozwiązany
         const isCompleted = await this.checkIfCompleted();
         if (isCompleted) {
           this.renderCompleted();
@@ -92,17 +86,13 @@ class QuizSetViewer extends HTMLElement {
         }
         return;
       } catch (e) {
-        console.error("💥 Error using direct data:", e);
       }
     }
     
-    // Fallback do atrybutu HTML
     const attrs = this.getAttribute("quiz-set-attributes");
     if (attrs) {
       try {
-        console.log("🔍 Raw attributes:", attrs);
         const data = JSON.parse(attrs);
-        console.log("🔍 Parsed data:", data);
         this.quizSet = {
           id: this.quizSetId || data.id || "unknown",
           title: data.title || "Quiz Set",
@@ -112,10 +102,8 @@ class QuizSetViewer extends HTMLElement {
           isDaily: data.isDaily || false,
           category: data.category || "Ogólny"
         };
-        console.log("🔍 Created quizSet:", this.quizSet);
         this.totalPoints = this.quizSet.questions.reduce((sum, q) => sum + (q.points || 10), 0);
         
-        // Sprawdź czy quiz-set już został rozwiązany
         const isCompleted = await this.checkIfCompleted();
         if (isCompleted) {
           this.renderCompleted();
@@ -124,8 +112,6 @@ class QuizSetViewer extends HTMLElement {
         }
         return;
       } catch (e) {
-        console.error("💥 Error parsing quiz-set data:", e);
-        console.error("💥 Raw attrs:", attrs);
         this.renderError("Błąd danych zestawu quizów: " + (e as Error).message);
         return;
       }
@@ -145,9 +131,6 @@ class QuizSetViewer extends HTMLElement {
       const currentUserId = user ? JSON.parse(user).id : null;
       if (!currentUserId) return false;
 
-      console.log("🔍 Checking completion for user:", currentUserId, "quiz:", this.quizSet!.id);
-
-      // Pobierz wszystkie statistics dla tego quiz-setu z populate user
       const API_URL = `http://localhost:1337/api/quiz-statistics?filters[quizSetId][$eq]=${this.quizSet!.id}&populate=user`;
       
       const response = await fetch(API_URL, {
@@ -158,28 +141,23 @@ class QuizSetViewer extends HTMLElement {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("🔍 Quiz-set-viewer statistics:", data.data);
         
-        // Strapi v4: user relacja jest w stat.attributes.user.data
         const userStats = data.data.filter((stat: any) => {
           const user = stat.attributes?.user?.data;
           return user && String(user.id) === String(currentUserId);
         });
 
-        console.log("🔍 Current user stats for this quiz:", userStats);
         const isCompleted = userStats.length > 0;
-        console.log("🔍 Quiz completed by current user:", isCompleted);
         return isCompleted;
       }
     } catch (err) {
-      console.warn("Błąd sprawdzania ukończenia:", err);
     }
     return false;
   }
 
   renderCompleted() {
     this.shadow.innerHTML = `
-      <style>${quizViewerCss}</style>
+      <style></style>
       <div class="quiz-container">
         <div class="quiz-header">
           <h1>${this.quizSet!.title}</h1>
@@ -214,6 +192,7 @@ class QuizSetViewer extends HTMLElement {
     this.timeRemaining = this.quizSet.timeLimit;
     this.resultSubmitted = false; // Reset flagi przed rozpoczęciem nowego quizu
     this.isFinishing = false; // Reset flagi finishing
+    this.notificationSent = false; // Reset flagi powiadomienia
     
     this.startTimer();
     this.render();
@@ -246,8 +225,13 @@ class QuizSetViewer extends HTMLElement {
   }
 
   nextQuestion() {
+    console.log('⏭️ nextQuestion() called - current index:', this.currentQuestionIndex, 'total questions:', this.quizSet?.questions?.length);
+    
     // Sprawdź czy quiz jest już nieaktywny (zabezpieczenie przed wielokrotnym kliknięciem)
-    if (!this.isActive) return;
+    if (!this.isActive) {
+      console.log('❌ Quiz not active, returning');
+      return;
+    }
     
     const form = this.shadow.querySelector('.quiz-form') as HTMLFormElement;
     if (!form) return;
@@ -290,21 +274,25 @@ class QuizSetViewer extends HTMLElement {
       
       this.currentQuestionIndex++;
       
+      console.log('📈 Updated index:', this.currentQuestionIndex, 'vs questions length:', this.quizSet!.questions.length);
+      
       if (this.currentQuestionIndex >= this.quizSet!.questions.length) {
+        console.log('🏁 Should finish quiz - calling finishQuizSet()');
         this.finishQuizSet();
       } else {
+        console.log('➡️ Moving to next question');
         this.render();
       }
     }, 1500);
   }
 
   async finishQuizSet() {
-    // Zabezpieczenie przed wielokrotnym wywołaniem
     if (!this.isActive || this.isFinishing) return;
     
-    console.log("🏁 Finishing quiz set...");
-    this.isFinishing = true; // Zablokuj od razu
-    this.isActive = false; // Ustaw na początku żeby zablokować kolejne wywołania
+    console.log('🏁 finishQuizSet() wywołana');
+    
+    this.isFinishing = true;
+    this.isActive = false;
     
     if (this.timer) {
       clearInterval(this.timer);
@@ -314,11 +302,17 @@ class QuizSetViewer extends HTMLElement {
     const timeSpent = Math.round((Date.now() - this.startTime) / 1000);
     const percentage = Math.round((this.earnedPoints / this.totalPoints) * 100);
 
+    console.log(`📊 Wyniki: czas=${timeSpent}s, wynik=${percentage}%, notificationSent=${this.notificationSent}`);
+
     // Save result to localStorage
     this.saveResult();
 
     // Send result to backend
     await this.submitResult(timeSpent, percentage);
+
+    // Trigger completion notification based on quiz type
+    console.log('🔔 Próba uruchomienia powiadomienia z finishQuizSet...');
+    this.triggerNotificationBasedOnType(percentage);
 
     this.renderResults(timeSpent, percentage);
   }
@@ -349,9 +343,10 @@ class QuizSetViewer extends HTMLElement {
   }
 
   async submitResult(timeSpent: number, percentage: number) {
-    // Zabezpieczenie przed wielokrotnym wysyłaniem
+    console.log(`📤 submitResult() wywołana: czas=${timeSpent}s, wynik=${percentage}%`);
+    
     if (this.resultSubmitted) {
-      console.log("📊 Result already submitted, skipping");
+      console.log('⚠️ Wynik już przesłany, pomijam submitResult');
       return;
     }
     
@@ -360,11 +355,9 @@ class QuizSetViewer extends HTMLElement {
       const token = localStorage.getItem("strapi_jwt");
       
       if (!token) {
-        console.warn("No auth token, skipping result submission");
         return;
       }
 
-      // Oznacz jako już wysłane
       this.resultSubmitted = true;
 
       const headers = {
@@ -374,7 +367,7 @@ class QuizSetViewer extends HTMLElement {
 
       const result = {
         data: {
-          quizSetId: String(this.quizSet!.id), // Zawsze wyślij jako string
+          quizSetId: String(this.quizSet!.id),
           score: this.earnedPoints,
           totalPoints: this.totalPoints,
           timeSpent: timeSpent,
@@ -383,10 +376,6 @@ class QuizSetViewer extends HTMLElement {
           answers: this.userAnswers.length > 0 ? this.userAnswers : ["no answers"]
         }
       };
-
-      console.log("📊 Submitting quiz result:", result);
-      console.log("📊 QuizSet ID being sent:", this.quizSet!.id, "Type:", typeof this.quizSet!.id);
-      console.log("📊 Full payload:", JSON.stringify(result, null, 2));
 
       const response = await fetch(API_URL, {
         method: "POST",
@@ -404,39 +393,26 @@ class QuizSetViewer extends HTMLElement {
       } catch (e) {
         responseText = "(brak odpowiedzi)";
       }
-      console.log("📊 Backend response status:", response.status);
-      console.log("📊 Backend response text:", responseText);
-      if (responseJson) {
-        console.log("📊 Backend response JSON:", responseJson);
-      }
 
       if (response.ok) {
-        // Jeśli backend zwraca istniejący wpis (duplikat), natychmiast renderuj ekran ukończony
         if (response.status === 200 && responseJson && responseJson.data) {
-          console.log("🚫 Duplicate detected, rendering completed screen");
           this.resultSubmitted = true;
           this.renderCompleted();
-          // Wyślij event że quiz-set został ukończony
+          console.log('✅ Wynik zapisany pomyślnie w bazie danych');
           this.dispatchEvent(new CustomEvent('quiz-completed', {
             bubbles: true,
             detail: { quizSetId: this.quizSet!.id }
           }));
           return;
         }
-        console.log("✅ Quiz result saved successfully");
-        if (responseJson && responseJson.data) {
-          console.log("✅ Saved quiz-statistic:", responseJson.data);
-        }
-        // Wyślij event że quiz-set został ukończony
+        console.log('✅ Wynik przesłany (bez szczegółowej odpowiedzi)');
         this.dispatchEvent(new CustomEvent('quiz-completed', {
           bubbles: true,
           detail: { quizSetId: this.quizSet!.id }
         }));
       } else {
-        console.warn("⚠️ Failed to save quiz result:", response.status, responseText);
       }
     } catch (err) {
-      console.error("💥 Error saving quiz result:", err);
     }
   }
 
@@ -482,7 +458,6 @@ class QuizSetViewer extends HTMLElement {
 
     this.shadow.innerHTML = `
       <style>
-        ${quizViewerCss}
         
         .quiz-set-preview {
           background: var(--card-bg);
@@ -645,7 +620,6 @@ class QuizSetViewer extends HTMLElement {
 
     this.shadow.innerHTML = `
       <style>
-        ${quizViewerCss}
         
         .quiz-container {
           background: var(--card-bg);
@@ -899,7 +873,6 @@ class QuizSetViewer extends HTMLElement {
 
     this.shadow.innerHTML = `
       <style>
-        ${quizViewerCss}
         
         .results-container {
           background: var(--card-bg);
@@ -1010,6 +983,45 @@ class QuizSetViewer extends HTMLElement {
         ${msg}
       </div>
     `;
+  }
+
+  triggerNotificationBasedOnType(percentage: number = 0) {
+    // Prevent multiple notifications
+    if (this.notificationSent) {
+      console.log('📢 Notification already sent, skipping...');
+      return;
+    }
+    
+    this.notificationSent = true;
+    
+    if (!this.quizSet) {
+      console.log('❌ No quiz set data available');
+      return;
+    }
+    
+    // Sprawdź czy to pojedynczy quiz (1 pytanie) czy moduł (więcej pytań)
+    const isQuiz = this.quizSet.questions.length === 1;
+    const isModule = this.quizSet.questions.length > 1;
+    
+    console.log(`📊 Typ ukończenia: ${isQuiz ? 'quiz' : 'moduł'}, liczba pytań: ${this.quizSet.questions.length}, wynik: ${percentage}%`);
+    
+    // Use notification helper for better integration
+    import('../../features/notifications/notification-helper').then(({ notificationHelper }) => {
+      if (isQuiz) {
+        notificationHelper.triggerQuizCompleted(this.quizSet!.title || 'Quiz', percentage);
+        console.log('✅ Quiz completion notification triggered');
+      } else if (isModule) {
+        notificationHelper.triggerModuleCompleted(this.quizSet!.title || 'Zestaw zadań');
+        console.log('✅ Module completion notification triggered');
+      }
+    }).catch(error => {
+      console.error('❌ Failed to trigger notification:', error);
+    });
+  }
+
+  // Backward compatibility - keep old method but redirect to new one
+  triggerModuleCompletedNotification() {
+    this.triggerNotificationBasedOnType();
   }
 }
 

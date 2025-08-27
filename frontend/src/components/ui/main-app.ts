@@ -1,3 +1,5 @@
+import "../notifications/notification-manager";
+
 export class MainApp extends HTMLElement {
   private user: any = null;
   private currentSection: string = "dashboard";
@@ -22,6 +24,10 @@ export class MainApp extends HTMLElement {
       return;
     }
     this.user = user;
+    
+    // Trigger login notification
+    this.triggerLoginNotification(user);
+    
     // Odczytaj sekcję z hash w URL
     const hashSection = window.location.hash.replace("#", "");
     if (hashSection) {
@@ -39,6 +45,9 @@ export class MainApp extends HTMLElement {
 
   render() {
     this.innerHTML = `
+      <!-- Notification Manager -->
+      <notification-manager></notification-manager>
+      
       <!-- Navigation -->
       <navbar-component role="${
         this.user.role?.name || "student"
@@ -66,6 +75,17 @@ export class MainApp extends HTMLElement {
     }
 
     this.renderSection();
+    
+    // Make sure notification manager is working
+    setTimeout(() => {
+      const manager = this.querySelector('notification-manager');
+      console.log('🔍 Notification manager found:', !!manager);
+      if (manager) {
+        console.log('✅ Notification manager is in DOM');
+      } else {
+        console.log('❌ Notification manager NOT found in DOM');
+      }
+    }, 1000);
   }
 
   addThemeToggleToBody() {
@@ -124,6 +144,15 @@ export class MainApp extends HTMLElement {
     } else {
       content.innerHTML = `<student-dashboard section="${this.currentSection}"></student-dashboard>`;
     }
+  }
+
+  private triggerLoginNotification(user: any) {
+    // Import notification helper and trigger login notification
+    import('../../features/notifications/notification-helper').then(({ notificationHelper }) => {
+      notificationHelper.triggerLogin(user.id || user.username || 'user');
+    }).catch(error => {
+      console.error('Failed to trigger login notification:', error);
+    });
   }
 }
 

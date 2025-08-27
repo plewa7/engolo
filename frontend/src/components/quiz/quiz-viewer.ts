@@ -1,5 +1,6 @@
 // @ts-ignore
 import quizViewerCss from "../../styles/quiz-viewer.css?inline";
+import { notificationHelper } from "../../features/notifications/notification-helper";
 
 interface QuizData {
   id: string;
@@ -67,27 +68,6 @@ class QuizViewer extends HTMLElement {
         this.renderError("Błąd danych quizu.");
         return;
       }
-    }
-    // NIE pobieraj quizu z API jeśli quiz-attributes już jest
-    // if (this.quizId) {
-    //   this.fetchQuiz();
-    // }
-  }
-
-  async fetchQuiz() {
-    if (!this.quizId) return;
-    try {
-      const API_URL = `http://localhost:1337/api/quizzes/${this.quizId}`;
-      const res = await fetch(API_URL);
-      if (res.ok) {
-        const data = await res.json();
-        this.quiz = data.data ? data.data.attributes : data;
-        this.render();
-      } else {
-        this.renderError("Nie znaleziono quizu.");
-      }
-    } catch (err) {
-      this.renderError("Błąd sieci.");
     }
   }
 
@@ -534,16 +514,29 @@ class QuizViewer extends HTMLElement {
       localStorage.setItem(solvedKey, JSON.stringify(solvedIds));
     }
 
+    // Calculate points
+    const points = this.quiz?.points || 10;
+    const earnedPoints = isCorrect ? Math.max(1, points - Math.floor(timeSpent / 10)) : 0;
+
     // Show result with enhanced UI
-    this.showResult(isCorrect, timeSpent, isTimeUp, correctAnswer);
+    this.showResult(isCorrect, timeSpent, isTimeUp, correctAnswer, earnedPoints);
+    
+    // Trigger notification for quiz completion
+    if (isCorrect) {
+      const score = Math.round((earnedPoints / points) * 100);
+      console.log('🎯 Quiz completed correctly, triggering notification. Score:', score);
+      this.triggerQuizCompletedNotification(question, score);
+    } else {
+      console.log('❌ Quiz not completed correctly, no notification');
+    }
   }
 
-  showResult(isCorrect: boolean, timeSpent: number, isTimeUp: boolean = false, correctAnswer: string) {
+  showResult(isCorrect: boolean, timeSpent: number, isTimeUp: boolean = false, correctAnswer: string, earnedPoints?: number) {
     const resultElement = this.shadow.querySelector('#result');
     if (!resultElement) return;
 
     const points = this.quiz?.points || 10;
-    const earnedPoints = isCorrect ? Math.max(1, points - Math.floor(timeSpent / 10)) : 0;
+    const calculatedEarnedPoints = earnedPoints ?? (isCorrect ? Math.max(1, points - Math.floor(timeSpent / 10)) : 0);
 
     const resultClass = isCorrect ? 'result-correct' : 'result-incorrect';
     const icon = isCorrect ? '🎉' : (isTimeUp ? '⏰' : '😔');
@@ -555,7 +548,7 @@ class QuizViewer extends HTMLElement {
         <div class="result-text">${title}</div>
         ${isCorrect ? `
           <div class="correct-answer">
-            Zdobyłeś ${earnedPoints} punktów w ${timeSpent} sekund!
+            Zdobyłeś ${calculatedEarnedPoints} punktów w ${timeSpent} sekund!
           </div>
         ` : `
           <div class="correct-answer">
@@ -571,6 +564,11 @@ class QuizViewer extends HTMLElement {
     if (form) {
       (form as HTMLElement).style.display = 'none';
     }
+  }
+
+  triggerQuizCompletedNotification(quizName: string, score: number) {
+    console.log('Quiz completed:', quizName, score);
+    notificationHelper.triggerQuizCompleted(quizName, score);
   }
 
   async saveQuizStatistic(statisticData: any) {

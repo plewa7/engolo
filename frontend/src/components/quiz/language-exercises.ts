@@ -757,6 +757,9 @@ class LanguageExercises extends HTMLElement {
   showFinalScore() {
     const totalCompleted = this.completed.length;
     
+    // Wyślij powiadomienie o ukończeniu modułu
+    this.triggerModuleCompletedNotification();
+    
     this.shadow.innerHTML = `
       ${this.getStyles()}
       <div class="exercise-container">
@@ -1214,6 +1217,28 @@ class LanguageExercises extends HTMLElement {
         }
       </style>
     `;
+  }
+
+  async triggerModuleCompletedNotification() {
+    console.log('🔔 Language Exercises: Triggering module completion notification for Module', this.currentModule);
+    
+    try {
+      const notificationHelper = await import('../../features/notifications/notification-helper');
+      await notificationHelper.notificationHelper.triggerModuleCompleted(`Moduł ${this.currentModule}: ${this.getModuleName()}`);
+      console.log('✅ Language module completion notification sent successfully');
+    } catch (error) {
+      console.error('❌ Failed to trigger language module notification:', error);
+    }
+  }
+
+  getModuleName(): string {
+    const moduleNames = {
+      1: 'Podstawy',
+      2: 'Rodzina i dom', 
+      3: 'Szkoła i nauka',
+      4: 'Kolory i liczby'
+    };
+    return moduleNames[this.currentModule as keyof typeof moduleNames] || `Moduł ${this.currentModule}`;
   }
 }
 

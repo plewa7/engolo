@@ -1,4 +1,37 @@
 ﻿import "../../styles/globals.css";
+import {
+  Chart,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  PointElement,
+  ArcElement,
+  DoughnutController,
+  BarController,
+  LineController,
+  ScatterController
+} from 'chart.js';
+
+// Rejestracja kontrolerów Chart.js
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  DoughnutController,
+  BarController,
+  LineController,
+  ScatterController
+);
 
 interface StatisticData {
   totalExercises: number;
@@ -39,12 +72,16 @@ interface QuizStatistic {
   timeSpent: number;
   completedAt: string;
   category?: string;
+  score?: number;
+  totalPoints?: number;
+  percentage?: number;
 }
 
 class StudentStatistics extends HTMLElement {
   shadow: ShadowRoot;
   statistics: StatisticData | null = null;
   loading: boolean = true;
+  charts: { [key: string]: Chart } = {};
 
   constructor() {
     super();
@@ -67,6 +104,7 @@ class StudentStatistics extends HTMLElement {
 
       const token = localStorage.getItem("strapi_jwt");
       let statisticsData: any[] = [];
+      let quizSetsData: any[] = [];
 
       // Spróbuj pobrać z backend'u
       if (token) {
@@ -77,7 +115,12 @@ class StudentStatistics extends HTMLElement {
           });
 
           // Pobierz quiz statistics
-          const quizResponse = await fetch(`http://localhost:1337/api/quiz-statistics?filters[user][id][$eq]=${userId}&sort=completedAt:desc`, {
+          const quizResponse = await fetch(`http://localhost:1337/api/quiz-statistics?filters[user][id][$eq]=${userId}&sort=completedAt:desc&populate=user`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+
+          // Pobierz quiz-sets żeby mieć tytuły
+          const quizSetsResponse = await fetch(`http://localhost:1337/api/quiz-sets`, {
             headers: { "Authorization": `Bearer ${token}` }
           });
 
@@ -87,8 +130,6 @@ class StudentStatistics extends HTMLElement {
           if (exerciseResponse.ok) {
             const data = await exerciseResponse.json();
             exerciseData = data.data || [];
-          } else if (exerciseResponse.status === 403) {
-            exerciseData = this.loadStatisticsFromLocalStorage(userId, 'exercise_statistics');
           } else {
             exerciseData = this.loadStatisticsFromLocalStorage(userId, 'exercise_statistics');
           }
@@ -96,10 +137,14 @@ class StudentStatistics extends HTMLElement {
           if (quizResponse.ok) {
             const data = await quizResponse.json();
             quizData = data.data || [];
-          } else if (quizResponse.status === 403) {
-            quizData = this.loadStatisticsFromLocalStorage(userId, 'quiz_statistics');
           } else {
             quizData = this.loadStatisticsFromLocalStorage(userId, 'quiz_statistics');
+          }
+
+          if (quizSetsResponse.ok) {
+            const data = await quizSetsResponse.json();
+            quizSetsData = data.data || [];
+            console.log('Quiz Sets Data:', quizSetsData); // Debug
           }
 
           // Combine both types of statistics
@@ -114,13 +159,17 @@ class StudentStatistics extends HTMLElement {
         const exerciseData = this.loadStatisticsFromLocalStorage(userId, 'exercise_statistics');
         const quizData = this.loadStatisticsFromLocalStorage(userId, 'quiz_statistics');
         statisticsData = [...exerciseData, ...quizData];
-      }      this.processStatistics(statisticsData);
+      }
+
+      // Przekaż dane wraz z quiz-setami do processStatistics
+      this.processStatistics(statisticsData, quizSetsData);
     } catch (error) {
-      console.error('Error loading statistics:', error);
       this.showError("Błąd połączenia");
     } finally {
       this.loading = false;
       this.render();
+      // Utwórz wykresy po renderowaniu
+      setTimeout(() => this.createCharts(), 100);
     }
   }
 
@@ -134,7 +183,7 @@ class StudentStatistics extends HTMLElement {
     }));
   }
 
-  processStatistics(rawData: any[]) {
+  processStatistics(rawData: any[], quizSetsData: any[] = []) {
     
     if (!rawData || rawData.length === 0) {
       this.statistics = {
@@ -156,8 +205,12 @@ class StudentStatistics extends HTMLElement {
     }).filter(stat => stat && typeof stat === 'object'); // Odfiltruj nieprawidłowe dane
     
     // Rozdziel na ćwiczenia językowe i quizy nauczyciela
-    const exercises = allStats.filter(stat => stat.exerciseType && !stat.quizId);
-    const quizzes = allStats.filter(stat => stat.quizId);
+    const exercises = allStats.filter(stat => stat.exerciseType && !stat.quizSetId);
+    const quizzes = allStats.filter(stat => stat.quizSetId);
+    
+    console.log('All Stats:', allStats); // Debug
+    console.log('Quizzes:', quizzes); // Debug
+    console.log('Quiz Sets Data in processStatistics:', quizSetsData); // Debug
     
     if (allStats.length === 0) {
       this.statistics = {
@@ -214,18 +267,27 @@ class StudentStatistics extends HTMLElement {
     const recentQuizzes = quizzes
       .sort((a, b) => new Date(b.completedAt || 0).getTime() - new Date(a.completedAt || 0).getTime())
       .slice(0, 10)
-      .map(quiz => ({
-        id: quiz.id || 'unknown',
-        quizId: quiz.quizId || 'unknown',
-        question: (quiz.question || '').substring(0, 50) + '...',
-        userAnswer: quiz.userAnswer || '',
-        correctAnswer: quiz.correctAnswer || '',
-        isCorrect: quiz.isCorrect === true,
-        attempts: quiz.attempts || 1,
-        timeSpent: quiz.timeSpent || 0,
-        completedAt: quiz.completedAt || new Date().toISOString(),
-        category: quiz.category || 'Quiz'
-      }));
+      .map(quiz => {
+        // Znajdź tytuł quiz-setu na podstawie ID (konwertuj na number dla porównania)
+        const quizSetId = parseInt(quiz.quizSetId);
+        const quizSet = quizSetsData.find(qs => qs.id === quizSetId);
+        const quizTitle = quizSet?.attributes?.title || quizSet?.title || `Quiz Set (ID: ${quiz.quizSetId})`;
+        
+        console.log(`Quiz ${quiz.quizSetId}: Found quizSet:`, quizSet, 'Title:', quizTitle); // Debug
+        
+        return {
+          id: quiz.id || 'unknown',
+          quizId: quiz.quizSetId || 'unknown',
+          question: `${quizTitle} - ${quiz.score || 0}/${quiz.totalPoints || 0} pkt`,
+          userAnswer: `${quiz.score || 0} punktów`,
+          correctAnswer: `${quiz.totalPoints || 0} punktów (max)`,
+          isCorrect: (quiz.percentage || 0) >= 50,
+          attempts: 1,
+          timeSpent: quiz.timeSpent || 0,
+          completedAt: quiz.completedAt || new Date().toISOString(),
+          category: `${quizTitle} (${Math.round(quiz.percentage || 0)}%)`
+        };
+      });
 
     this.statistics = {
       totalExercises,
@@ -446,7 +508,23 @@ class StudentStatistics extends HTMLElement {
                   </div>
                 </div>
               </div>
-            `).join('') : '<p class="no-data-small">Brak rozwiązanych quizów od nauczyciela</p>'}
+            `).join('') : `
+              <div class="no-data-small">
+                <p>Brak rozwiązanych quizów od nauczyciela</p>
+              </div>
+            `}
+          </div>
+        </div>
+
+        <!-- Sekcja wykresów -->
+        <div class="section">
+          <h3>📊 Twoja skuteczność w modułach</h3>
+          <div class="single-chart-container">
+            <div class="main-chart-card">
+              <h4>Postęp i skuteczność nauki</h4>
+              <p class="chart-description">Zobacz jak radzisz sobie w poszczególnych modułach językowych</p>
+              <canvas id="moduleAccuracyChart"></canvas>
+            </div>
           </div>
         </div>
       </div>
@@ -647,6 +725,121 @@ class StudentStatistics extends HTMLElement {
           color: #d32f2f;
         }
 
+        /* Styles for charts */
+        .single-chart-container {
+          max-width: 900px;
+          margin: 30px auto 0;
+          padding: 0 20px;
+        }
+
+        .main-chart-card {
+          background: linear-gradient(135deg, var(--card-bg) 0%, rgba(255,255,255,0.05) 100%);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 20px;
+          padding: 32px;
+          box-shadow: 
+            0 12px 40px rgba(0,0,0,0.15),
+            0 4px 12px rgba(0,0,0,0.1);
+          backdrop-filter: blur(10px);
+          height: 500px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+
+        .main-chart-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+          border-radius: 20px 20px 0 0;
+        }
+
+        .main-chart-card h4 {
+          color: var(--text-primary);
+          margin: 0 0 8px 0;
+          font-size: 22px;
+          font-weight: 600;
+        }
+
+        .chart-description {
+          color: var(--text-secondary);
+          margin: 0 0 24px 0;
+          font-size: 14px;
+          line-height: 1.4;
+        }
+
+        .main-chart-card canvas {
+          flex: 1;
+          max-width: 100% !important;
+          max-height: 420px !important;
+          width: 100% !important;
+          height: 400px !important;
+        }
+
+        .chart-card {
+          background: linear-gradient(135deg, var(--card-bg) 0%, rgba(255,255,255,0.05) 100%);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 16px;
+          padding: 24px;
+          box-shadow: 
+            0 8px 32px rgba(0,0,0,0.12),
+            0 2px 8px rgba(0,0,0,0.08);
+          backdrop-filter: blur(10px);
+          height: 420px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+
+        .chart-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+          border-radius: 16px 16px 0 0;
+        }
+
+        .chart-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 
+            0 12px 40px rgba(0,0,0,0.15),
+            0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h4 {
+          margin: 0 0 20px 0;
+          color: var(--text-primary);
+          font-size: 18px;
+          font-weight: 600;
+          text-align: center;
+          flex-shrink: 0;
+          background: linear-gradient(135deg, var(--text-primary) 0%, #667eea 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .chart-card canvas {
+          flex: 1;
+          max-width: 100% !important;
+          max-height: 340px !important;
+          width: 380px !important;
+          height: 320px !important;
+          object-fit: contain;
+          border-radius: 8px;
+        }
+
         .no-data-small {
           color: var(--text-muted);
           font-size: 14px;
@@ -756,6 +949,33 @@ class StudentStatistics extends HTMLElement {
             flex-direction: column;
             gap: 5px;
           }
+
+          .single-chart-container {
+            padding: 0 10px;
+          }
+          
+          .main-chart-card {
+            padding: 20px;
+            height: 400px;
+          }
+
+          .main-chart-card h4 {
+            font-size: 18px;
+          }
+
+          .chart-description {
+            font-size: 13px;
+            margin-bottom: 16px;
+          }
+        }
+            height: 380px;
+            padding: 20px;
+          }
+          
+          .chart-card canvas {
+            max-height: 300px !important;
+            height: 280px !important;
+          }
         }
 
         /* Animacje */
@@ -782,6 +1002,148 @@ class StudentStatistics extends HTMLElement {
         }
       </style>
     `;
+  }
+
+  // Funkcje wykresów
+  private createCharts() {
+    // Only create the main module accuracy chart for better readability
+    this.createModuleAccuracyChart();
+  }
+
+  private createModuleAccuracyChart() {
+    const canvas = this.shadow.querySelector('#moduleAccuracyChart') as HTMLCanvasElement;
+    if (!canvas || !this.statistics) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const moduleData = this.statistics.moduleStats.map(module => ({
+      label: `Moduł ${module.module}`,
+      accuracy: module.accuracy,
+      completed: module.completed,
+      total: module.total,
+      progress: module.total > 0 ? (module.completed / module.total) * 100 : 0
+    }));
+
+    this.charts.moduleAccuracy = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: moduleData.map(m => m.label),
+        datasets: [{
+          label: 'Skuteczność (%)',
+          data: moduleData.map(m => m.accuracy),
+          backgroundColor: moduleData.map((m, index) => {
+            const colors = [
+              'rgba(76, 175, 80, 0.8)',   // Green for good performance
+              'rgba(33, 150, 243, 0.8)',  // Blue 
+              'rgba(156, 39, 176, 0.8)',  // Purple
+              'rgba(255, 193, 7, 0.8)',   // Amber
+              'rgba(255, 87, 34, 0.8)'    // Deep Orange
+            ];
+            return m.accuracy >= 80 ? colors[0] : // Green for good
+                   m.accuracy >= 60 ? colors[1] : // Blue for average
+                   colors[index % colors.length]; // Other colors for lower
+          }),
+          borderColor: moduleData.map((m, index) => {
+            const colors = [
+              'rgba(76, 175, 80, 1)',
+              'rgba(33, 150, 243, 1)', 
+              'rgba(156, 39, 176, 1)',
+              'rgba(255, 193, 7, 1)',
+              'rgba(255, 87, 34, 1)'
+            ];
+            return m.accuracy >= 80 ? colors[0] :
+                   m.accuracy >= 60 ? colors[1] :
+                   colors[index % colors.length];
+          }),
+          borderWidth: 3,
+          borderRadius: 12,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: false
+          },
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: 'rgba(255, 255, 255, 0.3)',
+            borderWidth: 1,
+            cornerRadius: 12,
+            caretPadding: 10,
+            titleFont: { size: 16, weight: 'bold' },
+            bodyFont: { size: 14 },
+            callbacks: {
+              afterBody: function(context) {
+                const dataIndex = context[0].dataIndex;
+                const module = moduleData[dataIndex];
+                return [
+                  `Postęp: ${module.completed}/${module.total} zadań (${Math.round(module.progress)}%)`,
+                  ``,
+                  module.accuracy >= 80 ? '🎉 Świetna robota!' :
+                  module.accuracy >= 60 ? '👍 Dobry wynik!' :
+                  '💪 Możesz to poprawić!'
+                ];
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)',
+              lineWidth: 1
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.8)',
+              font: { size: 13, weight: 'normal' },
+              callback: function(value) {
+                return value + '%';
+              }
+            },
+            title: {
+              display: true,
+              text: 'Skuteczność (%)',
+              color: 'rgba(255, 255, 255, 0.9)',
+              font: { size: 14, weight: 'bold' }
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.8)',
+              font: { size: 12, weight: 'normal' }
+            }
+          }
+        },
+        animation: {
+          duration: 1500,
+          easing: 'easeOutQuart'
+        }
+      }
+    });
+  }
+
+  disconnectedCallback() {
+    // Zniszcz wykresy przy usuwaniu komponentu
+    Object.values(this.charts).forEach(chart => {
+      if (chart) {
+        chart.destroy();
+      }
+    });
+    this.charts = {};
   }
 }
 
